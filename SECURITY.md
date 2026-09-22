@@ -52,7 +52,18 @@ API keys are read from environment variables / a local `.env` file. Never commit
 repository `.gitignore` already excludes it. If you believe a key has been exposed, rotate it
 immediately with the provider.
 
+## Known advisories
+
+| Package | Advisory | Status |
+|---------|----------|--------|
+| `nltk` | [PYSEC-2026-3740](https://osv.dev/vulnerability/PYSEC-2026-3740) — path-sandbox bypass in `TransitionParser` / `AveragedPerceptron` model persistence | Transitive (via `llama-parse` which depends on `llama-index-core`). **Not reachable** from DueDil.Agent: the application never calls the affected `nltk` model import/export APIs, and `pathsec` enforcement is not enabled. No patched release exists upstream yet. |
+
+DueDil.Agent uses no `nltk` APIs directly; the dependency is pulled in only for the optional
+LlamaParse-based PDF parsing. Running with the built-in `pypdf` fallback (i.e. without
+`llama-parse` installed) removes the dependency and the advisory entirely.
+
 ## Safe harbour
 
 We will not pursue legal action against researchers who make a good-faith effort to comply
 with this policy.
+
