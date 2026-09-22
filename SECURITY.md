@@ -66,4 +66,3 @@ LlamaParse-based PDF parsing. Running with the built-in `pypdf` fallback (i.e. w
 
 We will not pursue legal action against researchers who make a good-faith effort to comply
 with this policy.
-
