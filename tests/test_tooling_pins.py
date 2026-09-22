@@ -63,7 +63,11 @@ def test_dev_extra_pins_ruff_exactly():
 def test_pre_commit_ruff_rev_matches_dev_extra():
     match = _REV_LINE.search(_ruff_precommit_block())
     assert match is not None, "the ruff-pre-commit repo has no `rev:` line"
-    assert match.group(1) == _ruff_version_from_dev_extra()
+    rev, pinned = match.group(1), _ruff_version_from_dev_extra()
+    assert rev == pinned, (
+        f"ruff-pre-commit is at v{rev} but pyproject.toml [dev] and the CI lint job pin "
+        f"ruff=={pinned} - bump all three together"
+    )
 
 
 def test_pre_commit_runs_both_ruff_hooks():

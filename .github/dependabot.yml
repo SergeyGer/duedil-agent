@@ -26,3 +26,15 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+  # Keeps the `rev:` pins in .pre-commit-config.yaml (pre-commit-hooks, ruff-pre-commit).
+  # A `ruff-pre-commit` bump cannot be merged on its own: the ruff version is pinned in
+  # three places (.pre-commit-config.yaml, pyproject.toml [dev] and the CI lint job) and
+  # tests/test_tooling_pins.py fails until all three agree.
+  - package-ecosystem: pre-commit
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      pre-commit:
+        patterns: ["*"]
