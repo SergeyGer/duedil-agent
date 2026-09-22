@@ -214,6 +214,12 @@ Or install as a package (provides the `duedil` console script):
 pip install -e ".[dev]"
 ```
 
+No pitch deck handy? Generate a synthetic one for testing:
+
+```bash
+python scripts/make_sample_deck.py   # -> data/sample_deck.pdf
+```
+
 ---
 
 ## Configuration
