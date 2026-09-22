@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duedil-agent"
+version = "0.1.0"
+description = "Autonomous multi-agent due-diligence system (LangGraph) for technology startups."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+  "langgraph",
+  "langchain",
+  "multi-agent",
+  "due-diligence",
+  "venture-capital",
+  "llm",
+  "investment-memo",
+]
+authors = [{ name = "Sergey Gerasimov", email = "sergey.gerasimov@hotmail.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+  "langgraph>=0.2.60",
+  "langchain-core>=0.3.29",
+  "langchain-community>=0.3.13",
+  "langchain-openai>=0.2.14",
+  "langchain-anthropic>=0.3.1",
+  "llama-parse>=0.6.0",
+  "pypdf>=5.1.0",
+  "tavily-python>=0.5.0",
+  "streamlit>=1.41.0",
+  "reportlab>=4.2.5",
+  "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.4",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.8.0",
+  "pre-commit>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/SergeyGer/duedil-agent"
+Repository = "https://github.com/SergeyGer/duedil-agent"
+Issues = "https://github.com/SergeyGer/duedil-agent/issues"
+Changelog = "https://github.com/SergeyGer/duedil-agent/blob/main/CHANGELOG.md"
+
+[project.scripts]
+duedil = "app.cli:main"
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/ui.py"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 88
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+]
