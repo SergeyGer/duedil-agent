@@ -189,7 +189,7 @@ DueDil.Agent/
 │   └── cli.py             # command-line interface
 ├── tests/                 # pytest suite (70 tests, ~92% coverage)
 ├── data/                  # uploaded decks & generated reports (git-ignored)
-├── assets/                # social-preview banner (PNG + SVG)
+├── assets/                # social-preview banner + UI screenshot
 ├── scripts/               # helper scripts (sample deck, coverage badge, banner)
 ├── .github/               # CI, release workflow, issue/PR templates
 ├── pyproject.toml         # metadata, entry point, pytest & ruff config
@@ -307,6 +307,8 @@ graph streams events. The memo renders in Markdown with a **Download PDF** butto
 
 The interface is available in **English (default), German, French and Russian** — pick the
 language in the sidebar. Translations live in [`app/i18n.py`](app/i18n.py).
+
+<img src="assets/ui-screenshot.png" alt="DueDil.Agent Streamlit interface" width="720">
 
 ### Python API
 
