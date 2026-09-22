@@ -84,3 +84,33 @@ def test_quiet_mode_prints_only_memo(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "# Memo" in out
     assert "DueDil.Agent" not in out
+
+
+def test_generated_outputs_use_lf_line_endings(tmp_path, monkeypatch):
+    """Generated artefacts must stay LF-only on Windows (see .gitattributes)."""
+
+    deck = tmp_path / "deck.pdf"
+    deck.write_bytes(b"%PDF-1.4")
+    updates = [{"agent_supervisor": {"final_memo": "# Memo\n\nSecond line"}}]
+
+    monkeypatch.setattr(cli_mod, "parse_pdf_to_markdown", _fake_parser)
+    monkeypatch.setattr(cli_mod, "build_graph", lambda: _FakeGraph(updates))
+
+    out_md = tmp_path / "memo.md"
+    out_json = tmp_path / "state.json"
+    rc = cli_mod.main(
+        [
+            str(deck),
+            "--out",
+            str(tmp_path / "memo.pdf"),
+            "--md",
+            str(out_md),
+            "--json",
+            str(out_json),
+        ]
+    )
+
+    assert rc == 0
+    # `read_bytes` skips newline translation, so this also runs on Windows.
+    assert b"\r\n" not in out_md.read_bytes()
+    assert b"\r\n" not in out_json.read_bytes()
