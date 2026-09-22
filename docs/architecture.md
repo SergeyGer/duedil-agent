@@ -190,6 +190,115 @@ sequenceDiagram
 | Add a language | `TRANSLATIONS` in `app/i18n.py` (tests enforce key parity) |
 | Adjust prompts | `app/prompts.py` |
 
+---
+
+## CI, releases and automation
+
+All automation lives in `.github/workflows/`. It is deliberately split into three workflows:
+the always-on checks (`ci.yml`) are read-only and run on every change, while the two workflows
+that write somewhere (the repository itself, or a package registry) only run on `main` pushes
+and tags.
+
+| Workflow | Trigger | Writes to | Purpose |
+|----------|---------|-----------|---------|
+| `ci.yml` | `push` to `main`/`master`, every `pull_request`, `workflow_dispatch` | – (read-only) | Lint + test matrix |
+| `coverage.yml` | `push` to `main`/`master`, `workflow_dispatch` | `.github/badges/coverage.svg` | Self-hosted coverage badge |
+| `release.yml` | tag `v*.*.*`, `workflow_dispatch` | GitHub Releases, PyPI (opt-in) | Build, verify version, publish |
+
+### Continuous integration (`ci.yml`)
+
+Runs on every push and pull request. Both jobs must pass before a PR can be merged.
+
+```mermaid
+flowchart TD
+    EVT["push to main<br/>pull_request<br/>workflow_dispatch"] --> CI{{ci.yml}}
+    CI --> LINT["lint<br/><i>ubuntu-latest</i>"]
+    CI --> TEST["test<br/><i>matrix, fail-fast: false</i>"]
+
+    LINT --> LC["ruff check app tests"]
+    LC --> LF["ruff format --check app tests"]
+
+    TEST --> T311["Python 3.11"]
+    TEST --> T312["Python 3.12"]
+    TEST --> T313["Python 3.13"]
+    T311 --> PTC["pip install -r requirements.txt<br/>pytest --cov=app --cov-report=term-missing"]
+    T312 --> PTC
+    T313 --> PTC
+
+    LF --> GREEN([All jobs green])
+    PTC --> GREEN
+```
+
+- **`concurrency`** cancels superseded runs (`cancel-in-progress: true`), so pushing twice to a
+  branch does not queue two full matrices.
+- **`fail-fast: false`** keeps all three interpreters running even if one fails — a Python 3.13
+  regression must not hide a 3.11 result.
+- The test job installs `requirements.txt` (fully pinned) instead of resolving loose ranges, so
+  CI exercises exactly the versions the README asks users to install.
+- `actions/setup-python` runs with `cache: pip`, keyed off the lock file.
+
+### Coverage badge (`coverage.yml`)
+
+The README badge is **self-hosted**: there is no third-party service, the SVG is generated in
+CI and committed back to the repository.
+
+```mermaid
+flowchart TD
+    PUSH["push to main"] --> WB{{coverage.yml}}
+    WB --> GUARD{"head commit message<br/>contains &#91;skip ci&#93;?"}
+    GUARD -->|yes| SKIP([skip — avoids an infinite loop])
+    GUARD -->|no| COV["pytest --cov=app --cov-report="]
+    COV --> GEN["scripts/coverage_badge.py<br/>.github/badges/coverage.svg"]
+    GEN --> COMMIT["git-auto-commit-action<br/>chore: update coverage badge &#91;skip ci&#93;"]
+    COMMIT --> PUSH
+```
+
+The `[skip ci]` sentinel in the commit message is what breaks the loop: the badge commit
+itself triggers `push`, but the `if:` guard on the job filters it out.
+
+### Release (`release.yml`)
+
+Triggered by a semver tag. The build job is read-only; the GitHub Release and the PyPI publish
+hang off it as dependent jobs.
+
+```mermaid
+flowchart TD
+    TAG["push tag v*.*.*"] --> BUILD{{build}}
+    BUILD --> VERIFY["verify tag == pyproject version"]
+    VERIFY --> BLD["python -m build -> dist/"]
+    BLD --> UP["upload-artifact: dist"]
+    UP --> GHR{{github-release}}
+    UP --> PYPI{{publish-pypi}}
+    GHR --> DL["download-artifact: dist"]
+    DL --> REL["softprops/action-gh-release<br/>dist/* + generated notes"]
+    PYPI --> GATE{"vars.PUBLISH_TO_PYPI == 'true'?"}
+    GATE -->|no| OFF([skipped — opt-in])
+    GATE -->|yes| PUB["pypa/gh-action-pypi-publish<br/>OIDC / Trusted Publisher"]
+```
+
+- **Fail fast on mismatched versions.** `build` reads `[project].version` from `pyproject.toml`
+  with `tomllib` and exits if it differs from the tag (minus the leading `v`). A release can
+  never ship artefacts whose metadata disagrees with the tag.
+- **GitHub Release** attaches `dist/*` and uses `generate_release_notes: true`.
+  Tags containing `-rc` / `-beta` / `-alpha` are automatically marked as pre-releases.
+- **PyPI publishing is opt-in.** The `publish-pypi` job only runs when the repository variable
+  `PUBLISH_TO_PYPI` is `true`; it authenticates via OIDC (`id-token: write`) and a GitHub
+  Environment named `pypi`, so no long-lived token is stored. See
+  [Releasing](../README.md#releasing).
+
+### Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens at most 5 PRs, groups all `pip` and all
+`github-actions` bumps into two PRs, and **ignores packages that are pinned transitively**
+(`marshmallow`, `websockets`, `pydantic-core`, `uuid-utils`, `llama-cloud`). Those must move in
+lock-step with their parents, so the correct procedure is to re-freeze the lock
+(`pip install -U <pkg> && pip freeze`) rather than accept a PR.
+
+> **Branch protection.** `main` is protected by a repository rule: direct pushes are rejected
+> and changes must land through a pull request that passes the `ci.yml` checks.
+
+---
+
 ## Testing strategy
 
 All tests run **offline** (no API keys, no network):
