@@ -90,6 +90,9 @@ missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a
 
 ## Architecture
 
+For a deeper dive — state fields, per-node specs, a sequence diagram and extension points —
+see [`docs/architecture.md`](docs/architecture.md).
+
 ### Graph topology
 
 ```mermaid
@@ -191,6 +194,7 @@ DueDil.Agent/
 ├── data/                  # uploaded decks & generated reports (git-ignored)
 ├── assets/                # social-preview banner + UI screenshot
 ├── scripts/               # helper scripts (sample deck, coverage badge, banner)
+├── docs/                  # architecture documentation (state, nodes, diagrams)
 ├── .github/               # CI, release workflow, issue/PR templates
 ├── pyproject.toml         # metadata, entry point, pytest & ruff config
 ├── requirements.txt       # pinned lockfile (pip freeze)
@@ -198,6 +202,25 @@ DueDil.Agent/
 ├── Makefile
 └── README.md
 ```
+
+### Tests
+
+The test suite is fully **offline** (no API keys or network) and lives in `tests/`:
+
+| File | Covers |
+|------|--------|
+| `test_graph.py` | graph wiring, routing, the loop cap and the fallback memo (fake LLM) |
+| `test_critic.py` | deterministic Red-Flag heuristics |
+| `test_utils.py` | numeric parsing and financial benchmarks |
+| `test_parser.py` | PDF → Markdown (LlamaParse path + `pypdf` fallback) |
+| `test_report.py` | Markdown → PDF rendering |
+| `test_tools.py` | Tavily wrapper (`langchain-tavily` + community fallback) |
+| `test_config.py` | the LLM factory |
+| `test_cli.py` | CLI end-to-end against a mocked graph |
+| `test_i18n.py` | translation-table consistency across all languages |
+| `test_ui.py` | Streamlit smoke tests via `AppTest` |
+| `test_state.py` | state initialisation |
+| `conftest.py` | shared pytest setup (disables tracing during tests) |
 
 ---
 
