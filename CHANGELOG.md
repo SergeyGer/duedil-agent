@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot configuration for weekly pip and GitHub Actions updates.
 - Multilingual Streamlit UI (English, German, French, Russian; English is the default),
   with translations in `app/i18n.py`.
+- Social-preview banner (`assets/social-preview.png` / `.svg`) with a generator script.
 
 ### Changed
 
@@ -35,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Markdown → PDF deal-memo export via ReportLab (`app/report.py`).
 - Streamlit web UI with step-by-step agent progress (`app/ui.py`).
 - Command-line interface (`python -m app.cli …`) with PDF/Markdown/JSON output.
-- Offline test suite (56 tests, ~94% coverage) and GitHub Actions CI.
+- Offline test suite (70 tests, ~92% coverage) and GitHub Actions CI.
 
 [Unreleased]: https://github.com/SergeyGer/duedil-agent/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/SergeyGer/duedil-agent/releases/tag/v0.1.0

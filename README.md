@@ -187,8 +187,10 @@ DueDil.Agent/
 │   ├── report.py          # Markdown -> PDF (ReportLab)
 │   ├── ui.py              # Streamlit web UI
 │   └── cli.py             # command-line interface
-├── tests/                 # pytest suite (56 tests, ~94% coverage)
+├── tests/                 # pytest suite (70 tests, ~92% coverage)
 ├── data/                  # uploaded decks & generated reports (git-ignored)
+├── assets/                # social-preview banner (PNG + SVG)
+├── scripts/               # helper scripts (sample deck, coverage badge, banner)
 ├── .github/               # CI, release workflow, issue/PR templates
 ├── pyproject.toml         # metadata, entry point, pytest & ruff config
 ├── requirements.txt       # pinned lockfile (pip freeze)
@@ -384,7 +386,7 @@ make lint         # ruff check
 make fmt          # ruff format
 ```
 
-The suite (56 tests, ~94% line coverage of `app/`) covers numeric parsing, financial
+The suite (70 tests, ~92% line coverage of `app/`) covers numeric parsing, financial
 benchmarking, Red-Flag heuristics, the routing function, full graph execution with a fake
 LLM, the parser fallback, the Tavily wrapper and the CLI — all **offline**, no API keys or
 network required.
