@@ -48,7 +48,10 @@ dependencies = [
 dev = [
   "pytest>=8.3.4",
   "pytest-cov>=6.0.0",
-  "ruff>=0.8.0",
+  # Exact pin: `ruff format` output and the enabled lint rules change between releases, so
+  # the pre-commit hook, a local `pip install -e ".[dev]"` and CI must all resolve to the
+  # same version. tests/test_tooling_pins.py fails if the three pins diverge.
+  "ruff==0.16.8",
   "pre-commit>=4.0.0",
 ]
 
@@ -73,7 +76,12 @@ addopts = "-ra"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = [".venv", "data"]
+# `.venv`/`data` are ignored by git anyway; keeping them here makes the exclusions
+# explicit. Markdown is excluded on purpose: ruff 0.16 also reformats the Python
+# snippets inside README.md / docs/architecture.md, which deliberately use column-aligned
+# comments. Excluding it makes `ruff check`, `ruff format` and the pre-commit hook cover
+# exactly the same files.
+extend-exclude = [".venv", "data", "*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
