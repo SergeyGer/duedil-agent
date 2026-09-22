@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Test-coverage tooling (`pytest-cov`) with a Codecov badge and CI upload.
+- Test-coverage tooling (`pytest-cov`) with a self-hosted coverage badge.
 - `SECURITY.md` and `CODE_OF_CONDUCT.md`.
 - Tag-driven release workflow (`.github/workflows/release.yml`) with optional PyPI publish.
+
+### Changed
+
+- Replaced the Codecov upload with a self-contained coverage-badge workflow
+  (`scripts/coverage_badge.py`), because Codecov is not reachable from every region.
 
 ## [0.1.0] - 2025-01-01
 

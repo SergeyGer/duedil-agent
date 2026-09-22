@@ -3,7 +3,7 @@
 > Autonomous multi-agent **due-diligence** system for technology startups — built on LangGraph.
 
 [![CI](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/SergeyGer/duedil-agent/branch/main/graph/badge.svg)](https://codecov.io/gh/SergeyGer/duedil-agent)
+[![Coverage](.github/badges/coverage.svg)](#testing--quality)
 [![Release](https://img.shields.io/github/v/release/SergeyGer/duedil-agent?sort=semver)](https://github.com/SergeyGer/duedil-agent/releases)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -342,7 +342,9 @@ benchmarking, Red-Flag heuristics, the routing function, full graph execution wi
 LLM, the parser fallback, the Tavily wrapper and the CLI — all **offline**, no API keys or
 network required.
 
-CI runs the tests (with coverage, uploaded to Codecov) and Ruff on every push/PR.
+CI runs the tests (with coverage) and Ruff on every push/PR. The coverage badge above is
+generated locally and committed automatically by the
+[`coverage` workflow](.github/workflows/coverage.yml) — no third-party service required.
 
 ---
 
