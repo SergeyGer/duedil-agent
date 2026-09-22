@@ -24,7 +24,11 @@ pre-commit install
 
 - **Python**: 3.11+. Type hints everywhere, `from __future__ import annotations`.
 - **Style**: [Ruff](https://github.com/astral-sh/ruff) with a 100-char line length.
-  Run `ruff format app tests` and `ruff check app tests` (or `make fmt` / `make lint`).
+  Run `ruff format .` and `ruff check .` (or `make fmt` / `make lint`).
+  The version is pinned (exactly) in three places — `pyproject.toml` (`[dev]`),
+  `.pre-commit-config.yaml` and the CI lint job — and all of them lint the whole repository
+  (Markdown is excluded), so a local run and CI always see the same files.
+  Bump the three pins together; `tests/test_tooling_pins.py` fails if they ever diverge.
 - **Tests**: every new behaviour should come with a test in `tests/`. Prefer tests that
   run **offline** (no API keys / network) — use `FakeListChatModel` and monkeypatching,
   as the existing graph tests do.

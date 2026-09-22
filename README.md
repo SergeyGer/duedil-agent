@@ -220,6 +220,7 @@ The test suite is fully **offline** (no API keys or network) and lives in `tests
 | `test_i18n.py` | translation-table consistency across all languages |
 | `test_ui.py` | Streamlit smoke tests via `AppTest` |
 | `test_state.py` | state initialisation |
+| `test_tooling_pins.py` | the `ruff` pin in `pyproject.toml`, `.pre-commit-config.yaml` and CI stays in sync |
 | `conftest.py` | shared pytest setup (disables tracing during tests) |
 
 ---
