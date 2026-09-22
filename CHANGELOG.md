@@ -7,22 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.1.0] - 2026-09-22
 
-- Test-coverage tooling (`pytest-cov`) with a self-hosted coverage badge.
-- `SECURITY.md` and `CODE_OF_CONDUCT.md`.
-- Tag-driven release workflow (`.github/workflows/release.yml`) with optional PyPI publish.
-- Dependabot configuration for weekly pip and GitHub Actions updates.
-- Multilingual Streamlit UI (English, German, French, Russian; English is the default),
-  with translations in `app/i18n.py`.
-- Social-preview banner (`assets/social-preview.png` / `.svg`) with a generator script.
-
-### Changed
-
-- Replaced the Codecov upload with a self-contained coverage-badge workflow
-  (`scripts/coverage_badge.py`), because Codecov is not reachable from every region.
-
-## [0.1.0] - 2025-01-01
+First public release.
 
 ### Added
 
@@ -34,9 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tavily-powered web verification of competitors, traffic and founder footprint.
 - Financial benchmarking: `ARR / headcount` vs. the B2B-SaaS norm (`app/utils.py`).
 - Markdown → PDF deal-memo export via ReportLab (`app/report.py`).
-- Streamlit web UI with step-by-step agent progress (`app/ui.py`).
+- Streamlit web UI with step-by-step agent progress (`app/ui.py`), available in English,
+  German, French and Russian (`app/i18n.py`).
 - Command-line interface (`python -m app.cli …`) with PDF/Markdown/JSON output.
-- Offline test suite (70 tests, ~92% coverage) and GitHub Actions CI.
+- Offline test suite (72 tests, ~92% coverage) and GitHub Actions CI.
+- Automated tag-driven release workflow with optional PyPI publishing.
+- Coverage tooling (`pytest-cov`) with a self-hosted badge (`scripts/coverage_badge.py`).
+- Dependabot configuration; `SECURITY.md` and `CODE_OF_CONDUCT.md`.
+- Social-preview banner (`assets/social-preview.png` / `.svg`) with a generator script.
+
+### Changed
+
+- Migrated the Tavily integration to the standalone `langchain-tavily` package (removes the
+  `langchain-community` deprecation warning).
+- Replaced the Codecov upload with a self-contained coverage-badge workflow.
 
 [Unreleased]: https://github.com/SergeyGer/duedil-agent/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/SergeyGer/duedil-agent/releases/tag/v0.1.0
