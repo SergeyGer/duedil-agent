@@ -47,10 +47,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install ruff
-        run: pip install ruff
+        # Pinned to match pyproject.toml ([dev]) and .pre-commit-config.yaml so a local
+        # hook run and CI cannot disagree (see tests/test_tooling_pins.py).
+        run: pip install "ruff==0.16.8"
 
       - name: Ruff check
-        run: ruff check app tests
+        run: ruff check .
 
       - name: Ruff format check
-        run: ruff format --check app tests
+        run: ruff format --check .

@@ -132,7 +132,10 @@ def render_png(path: Path) -> None:
         top = PILL_TOP + i * STEP
         draw.rounded_rectangle(
             [PILL_X, top, PILL_X + PILL_W, top + PILL_H],
-            radius=14, fill=PILL_BG, outline=PILL_BORDER, width=2,
+            radius=14,
+            fill=PILL_BG,
+            outline=PILL_BORDER,
+            width=2,
         )
         tw = draw.textlength(step, font=f_pill)
         draw.text((cx - tw / 2, top + 11), step, font=f_pill, fill=PILL_TEXT)
@@ -146,7 +149,9 @@ def render_png(path: Path) -> None:
     scraper_y = PILL_TOP + 1 * STEP + PILL_H // 2
     mid = (critic_y + scraper_y) // 2
     draw.line([rx, critic_y, rx, scraper_y + 12], fill=FLAG, width=3)
-    draw.polygon([(rx - 7, scraper_y + 12), (rx + 7, scraper_y + 12), (rx, scraper_y - 2)], fill=FLAG)
+    draw.polygon(
+        [(rx - 7, scraper_y + 12), (rx + 7, scraper_y + 12), (rx, scraper_y - 2)], fill=FLAG
+    )
     draw.text((rx + 12, mid - 16), "Red", font=f_small, fill=FLAG)
     draw.text((rx + 12, mid + 2), "Flags", font=f_small, fill=FLAG)
 
@@ -194,7 +199,9 @@ def render_svg(path: Path) -> None:
             f'  <rect x="{x}" y="416" width="{width}" height="38" rx="19" '
             f'fill="{_hex(PILL_BG)}" stroke="{_hex(PILL_BORDER)}" stroke-width="2"/>'
         )
-        parts.append(f'  <text x="{x + 15}" y="442" font-size="20" fill="{_hex(PILL_TEXT)}">{chip}</text>')
+        parts.append(
+            f'  <text x="{x + 15}" y="442" font-size="20" fill="{_hex(PILL_TEXT)}">{chip}</text>'
+        )
         x += width + 12
 
     cx = PILL_X + PILL_W // 2
@@ -231,10 +238,16 @@ def render_svg(path: Path) -> None:
         f'  <polygon points="{rx - 7},{scraper_y + 12} {rx + 7},{scraper_y + 12} {rx},{scraper_y - 2}" '
         f'fill="{_hex(FLAG)}"/>'
     )
-    parts.append(f'  <text x="{rx + 12}" y="{mid - 6}" font-size="21" fill="{_hex(FLAG)}">Red</text>')
-    parts.append(f'  <text x="{rx + 12}" y="{mid + 16}" font-size="21" fill="{_hex(FLAG)}">Flags</text>')
+    parts.append(
+        f'  <text x="{rx + 12}" y="{mid - 6}" font-size="21" fill="{_hex(FLAG)}">Red</text>'
+    )
+    parts.append(
+        f'  <text x="{rx + 12}" y="{mid + 16}" font-size="21" fill="{_hex(FLAG)}">Flags</text>'
+    )
 
-    parts.append(f'  <text x="{LEFT}" y="586" font-size="22" fill="{_hex(MUTED)}">{URL_TEXT}</text>')
+    parts.append(
+        f'  <text x="{LEFT}" y="586" font-size="22" fill="{_hex(MUTED)}">{URL_TEXT}</text>'
+    )
     parts.append(
         f'  <text x="{W - LEFT}" y="586" text-anchor="end" font-size="21" fill="{_hex(MUTED)}">'
         f"{LICENSE_TEXT}</text>"

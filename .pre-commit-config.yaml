@@ -10,8 +10,10 @@ repos:
       - id: mixed-line-ending
       - id: check-added-large-files
 
+  # Keep this `rev` in sync with the `ruff` pin in pyproject.toml ([dev]) and the CI lint
+  # job — tests/test_tooling_pins.py fails if the three diverge.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.16.8
     hooks:
       - id: ruff
         args: [--fix]

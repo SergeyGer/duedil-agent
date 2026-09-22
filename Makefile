@@ -32,10 +32,10 @@ cov:
 > $(PY) -m pytest --cov=app --cov-report=term-missing
 
 lint:
-> $(PY) -m ruff check app tests
+> $(PY) -m ruff check .
 
 fmt:
-> $(PY) -m ruff format app tests
+> $(PY) -m ruff format .
 
 run:
 > $(PY) -m streamlit run app/ui.py
