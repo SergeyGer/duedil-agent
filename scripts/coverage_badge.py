@@ -81,7 +81,7 @@ def main() -> int:
     total = coverage.report(file=sink, show_missing=False)
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(build_svg(total), encoding="utf-8")
+    output.write_text(build_svg(total), encoding="utf-8", newline="\n")
     print(f"Wrote {output} — coverage {total:.2f}%")
     return 0
 

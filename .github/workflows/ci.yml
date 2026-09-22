@@ -56,3 +56,12 @@ jobs:
 
       - name: Ruff format check
         run: ruff format --check .
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks
+        # Local hooks are opt-in (`pre-commit install`); running them here keeps
+        # contributors who skip that honest about whitespace, EOF newlines, mixed line
+        # endings and large files. Also proves .pre-commit-config.yaml still resolves.
+        run: pre-commit run --all-files --show-diff-on-failure

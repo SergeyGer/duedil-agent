@@ -141,14 +141,16 @@ def main(argv: list[str] | None = None) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_to_pdf(memo, str(out_path))
 
+    # `newline="\n"` keeps the generated artefacts LF-only on Windows, matching
+    # `.gitattributes` (`eol=lf`) and the pre-commit `mixed-line-ending` hook.
     if args.md_out:
         Path(args.md_out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.md_out).write_text(memo, encoding="utf-8")
+        Path(args.md_out).write_text(memo, encoding="utf-8", newline="\n")
 
     if args.json_out:
         Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(
-            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n"
         )
 
     if args.quiet:

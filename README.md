@@ -417,7 +417,8 @@ benchmarking, Red-Flag heuristics, the routing function, full graph execution wi
 LLM, the parser fallback, the Tavily wrapper and the CLI — all **offline**, no API keys or
 network required.
 
-CI runs the tests (with coverage) and Ruff on every push/PR. The coverage badge above is
+CI runs the tests (with coverage), Ruff and the [pre-commit](https://pre-commit.com) hooks on
+every push/PR. The coverage badge above is
 generated locally and committed automatically by the
 [`coverage` workflow](.github/workflows/coverage.yml) — no third-party service required.
 
