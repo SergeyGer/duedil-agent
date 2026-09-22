@@ -8,6 +8,16 @@ updates:
     groups:
       python:
         patterns: ["*"]
+    ignore:
+      # These are pinned transitively and must stay in lock-step with their parent
+      # packages (pydantic-core==x is pinned by pydantic, marshmallow<4 by
+      # dataclasses-json, websockets<17 by langgraph-sdk, ...). Update them by
+      # re-freezing the lock (`pip install -U <pkg> && pip freeze`), not via a PR.
+      - dependency-name: "marshmallow"
+      - dependency-name: "websockets"
+      - dependency-name: "pydantic-core"
+      - dependency-name: "uuid-utils"
+      - dependency-name: "llama-cloud"
 
   - package-ecosystem: github-actions
     directory: "/"
