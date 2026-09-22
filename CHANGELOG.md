@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SECURITY.md` and `CODE_OF_CONDUCT.md`.
 - Tag-driven release workflow (`.github/workflows/release.yml`) with optional PyPI publish.
 - Dependabot configuration for weekly pip and GitHub Actions updates.
+- Multilingual Streamlit UI (English, German, French, Russian; English is the default),
+  with translations in `app/i18n.py`.
 
 ### Changed
 

@@ -82,6 +82,8 @@ missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a
 - **Two front-ends** — a Streamlit web UI **and** a scriptable CLI.
 - **Graceful degradation** — missing API keys or LLM failures fall back to a
   deterministic memo instead of crashing the graph.
+- **Multilingual UI** — the Streamlit interface ships in English (default), German, French
+  and Russian.
 - **Observability** — one env var enables full LangSmith tracing.
 
 ---
@@ -300,6 +302,9 @@ streamlit run app/ui.py
 
 Upload a PDF, paste the website URL, and watch the **step-by-step agent progress** as the
 graph streams events. The memo renders in Markdown with a **Download PDF** button.
+
+The interface is available in **English (default), German, French and Russian** — pick the
+language in the sidebar. Translations live in [`app/i18n.py`](app/i18n.py).
 
 ### Python API
 
