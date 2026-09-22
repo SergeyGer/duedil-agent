@@ -1,4 +1,4 @@
-"""External search tool wiring (Tavily)."""
+"""External search tool wiring (Tavily via ``langchain-tavily``)."""
 
 from __future__ import annotations
 
@@ -11,8 +11,9 @@ DEFAULT_MAX_RESULTS = 5
 def get_search_tool(max_results: int = DEFAULT_MAX_RESULTS) -> Any | None:
     """Return a configured Tavily search tool, or ``None`` if unavailable.
 
-    Returns ``None`` (instead of raising) when ``TAVILY_API_KEY`` is not set or
-    the ``langchain-community`` Tavily integration cannot be imported, so the
+    Prefers the standalone ``langchain-tavily`` integration and falls back to the
+    legacy ``langchain-community`` one. Returns ``None`` (instead of raising) when
+    ``TAVILY_API_KEY`` is unset or the integration cannot be imported, so the
     graph degrades gracefully and stays testable offline.
     """
 
@@ -21,11 +22,15 @@ def get_search_tool(max_results: int = DEFAULT_MAX_RESULTS) -> Any | None:
         return None
 
     try:
-        from langchain_community.tools.tavily_search import TavilySearchResults
+        from langchain_tavily import TavilySearch
+
+        return TavilySearch(max_results=max_results, tavily_api_key=api_key)
     except Exception:  # pragma: no cover - depends on optional install
-        return None
+        pass
 
     try:
+        from langchain_community.tools.tavily_search import TavilySearchResults
+
         return TavilySearchResults(max_results=max_results, tavily_api_key=api_key)
     except Exception:  # pragma: no cover - defensive
         return None
@@ -39,7 +44,8 @@ def stringify_search_results(results: Any) -> str:
     if isinstance(results, str):
         return results
     if isinstance(results, dict):
-        results = [results]
+        inner = results.get("results")
+        results = inner if isinstance(inner, list) else [results]
     if isinstance(results, list):
         lines: list[str] = []
         for item in results:

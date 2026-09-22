@@ -5,9 +5,20 @@
 [![CI](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml)
 [![Coverage](.github/badges/coverage.svg)](#testing--quality)
 [![Release](https://img.shields.io/github/v/release/SergeyGer/duedil-agent?sort=semver)](https://github.com/SergeyGer/duedil-agent/releases)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1C3C3C?logo=langchain&logoColor=white)](https://github.com/langchain-ai/langgraph)
+[![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white)](https://python.langchain.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude-D4A27F)](https://www.anthropic.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Tavily](https://img.shields.io/badge/Tavily-web%20search-4B5563)](https://tavily.com/)
+[![LlamaParse](https://img.shields.io/badge/LlamaParse-PDF%20parsing-6E56CF)](https://cloud.llamaindex.ai/)
+[![ReportLab](https://img.shields.io/badge/ReportLab-PDF%20export-2C5E8E)](https://www.reportlab.com/)
+[![LangSmith](https://img.shields.io/badge/LangSmith-tracing-1C3C3C)](https://smith.langchain.com/)
+[![pytest](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)](https://pytest.org/)
+[![Ruff](https://img.shields.io/badge/lint-ruff-000000?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 
 **DueDil.Agent** turns a raw pitch deck into a board-ready investment memo. You upload a
 startup's PDF deck and its website URL; a graph of specialised LLM agents extracts the
@@ -34,6 +45,7 @@ inconsistencies (Red Flags) and writes a structured **Deal Memo** exported as PD
   - [Streamlit UI](#streamlit-ui)
   - [Python API](#python-api)
 - [Output](#output)
+- [Examples](#examples)
 - [Testing & quality](#testing--quality)
 - [Releasing](#releasing)
 - [Design decisions](#design-decisions)
@@ -70,11 +82,16 @@ missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a
 - **Two front-ends** — a Streamlit web UI **and** a scriptable CLI.
 - **Graceful degradation** — missing API keys or LLM failures fall back to a
   deterministic memo instead of crashing the graph.
+- **Multilingual UI** — the Streamlit interface ships in English (default), German, French
+  and Russian.
 - **Observability** — one env var enables full LangSmith tracing.
 
 ---
 
 ## Architecture
+
+For a deeper dive — state fields, per-node specs, a sequence diagram and extension points —
+see [`docs/architecture.md`](docs/architecture.md).
 
 ### Graph topology
 
@@ -173,8 +190,11 @@ DueDil.Agent/
 │   ├── report.py          # Markdown -> PDF (ReportLab)
 │   ├── ui.py              # Streamlit web UI
 │   └── cli.py             # command-line interface
-├── tests/                 # pytest suite (56 tests, ~94% coverage)
+├── tests/                 # pytest suite (70 tests, ~92% coverage)
 ├── data/                  # uploaded decks & generated reports (git-ignored)
+├── assets/                # social-preview banner + UI screenshot
+├── scripts/               # helper scripts (sample deck, coverage badge, banner)
+├── docs/                  # architecture documentation (state, nodes, diagrams)
 ├── .github/               # CI, release workflow, issue/PR templates
 ├── pyproject.toml         # metadata, entry point, pytest & ruff config
 ├── requirements.txt       # pinned lockfile (pip freeze)
@@ -182,6 +202,25 @@ DueDil.Agent/
 ├── Makefile
 └── README.md
 ```
+
+### Tests
+
+The test suite is fully **offline** (no API keys or network) and lives in `tests/`:
+
+| File | Covers |
+|------|--------|
+| `test_graph.py` | graph wiring, routing, the loop cap and the fallback memo (fake LLM) |
+| `test_critic.py` | deterministic Red-Flag heuristics |
+| `test_utils.py` | numeric parsing and financial benchmarks |
+| `test_parser.py` | PDF → Markdown (LlamaParse path + `pypdf` fallback) |
+| `test_report.py` | Markdown → PDF rendering |
+| `test_tools.py` | Tavily wrapper (`langchain-tavily` + community fallback) |
+| `test_config.py` | the LLM factory |
+| `test_cli.py` | CLI end-to-end against a mocked graph |
+| `test_i18n.py` | translation-table consistency across all languages |
+| `test_ui.py` | Streamlit smoke tests via `AppTest` |
+| `test_state.py` | state initialisation |
+| `conftest.py` | shared pytest setup (disables tracing during tests) |
 
 ---
 
@@ -212,6 +251,12 @@ Or install as a package (provides the `duedil` console script):
 
 ```bash
 pip install -e ".[dev]"
+```
+
+No pitch deck handy? Generate a synthetic one for testing:
+
+```bash
+python scripts/make_sample_deck.py   # -> data/sample_deck.pdf
 ```
 
 ---
@@ -283,6 +328,11 @@ streamlit run app/ui.py
 Upload a PDF, paste the website URL, and watch the **step-by-step agent progress** as the
 graph streams events. The memo renders in Markdown with a **Download PDF** button.
 
+The interface is available in **English (default), German, French and Russian** — pick the
+language in the sidebar. Translations live in [`app/i18n.py`](app/i18n.py).
+
+<img src="assets/ui-screenshot.png" alt="DueDil.Agent Streamlit interface" width="720">
+
 ### Python API
 
 ```python
@@ -328,6 +378,30 @@ Healthy: ARR/employee of $120,000 exceeds the B2B SaaS benchmark of $100,000.
 
 ---
 
+## Examples
+
+Ready-made inputs and outputs live in [`examples/`](examples/):
+
+| File | Description |
+|------|-------------|
+| [`sample_deck.pdf`](examples/sample_deck.pdf) | Synthetic pitch deck (NimbusAI). Regenerate with `python scripts/make_sample_deck.py`. |
+| [`sample_memo.md`](examples/sample_memo.md) | The generated deal memo (Markdown). |
+| [`sample_memo.pdf`](examples/sample_memo.pdf) | The same memo exported to PDF. |
+| [`sample_memo.json`](examples/sample_memo.json) | The full final `VentureState` (metrics, market data, benchmarks, red flags). |
+
+Regenerate the whole set with a single command:
+
+```bash
+python -m app.cli examples/sample_deck.pdf https://nimbusai.example \
+    --out examples/sample_memo.pdf --md examples/sample_memo.md --json examples/sample_memo.json
+```
+
+The sample run trips several **Red Flags** (a "market-leader" claim unsupported by external
+traffic, a team-size discrepancy vs. LinkedIn, and an ARR/employee below the SaaS benchmark) —
+a good illustration of the critic loop at work.
+
+---
+
 ## Testing & quality
 
 ```bash
@@ -337,7 +411,7 @@ make lint         # ruff check
 make fmt          # ruff format
 ```
 
-The suite (56 tests, ~94% line coverage of `app/`) covers numeric parsing, financial
+The suite (70 tests, ~92% line coverage of `app/`) covers numeric parsing, financial
 benchmarking, Red-Flag heuristics, the routing function, full graph execution with a fake
 LLM, the parser fallback, the Tavily wrapper and the CLI — all **offline**, no API keys or
 network required.
