@@ -20,6 +20,10 @@ Install the git hooks (recommended):
 pre-commit install
 ```
 
+CI runs `pre-commit run --all-files` in the `Lint (ruff)` job too, so anything the hooks would
+rewrite (trailing whitespace, a missing end-of-file newline, mixed line endings, …) fails the
+build even if you never installed them locally.
+
 ## Project conventions
 
 - **Python**: 3.11+. Type hints everywhere, `from __future__ import annotations`.

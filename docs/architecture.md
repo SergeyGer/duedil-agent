@@ -215,8 +215,9 @@ flowchart TD
     CI --> LINT["lint<br/><i>ubuntu-latest</i>"]
     CI --> TEST["test<br/><i>matrix, fail-fast: false</i>"]
 
-    LINT --> LC["ruff check app tests"]
-    LC --> LF["ruff format --check app tests"]
+    LINT --> LC["ruff check ."]
+    LC --> LF["ruff format --check ."]
+    LF --> PC["pre-commit run --all-files"]
 
     TEST --> T311["Python 3.11"]
     TEST --> T312["Python 3.12"]
@@ -225,7 +226,7 @@ flowchart TD
     T312 --> PTC
     T313 --> PTC
 
-    LF --> GREEN([All jobs green])
+    PC --> GREEN([All jobs green])
     PTC --> GREEN
 ```
 
@@ -236,6 +237,8 @@ flowchart TD
 - The test job installs `requirements.txt` (fully pinned) instead of resolving loose ranges, so
   CI exercises exactly the versions the README asks users to install.
 - `actions/setup-python` runs with `cache: pip`, keyed off the lock file.
+- The lint job also runs `pre-commit run --all-files`, so the repository-wide hooks are
+  enforced in CI and not only for contributors who installed them locally.
 
 ### Coverage badge (`coverage.yml`)
 
