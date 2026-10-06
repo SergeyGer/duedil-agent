@@ -4,10 +4,40 @@
 
 | Mode | Best for | Command |
 |---|---|---|
-| **Docker Compose** | a demo in one command, no local Python | `docker compose up --build` |
-| **Docker, offline demo** | seeing the pipeline with no keys and no cost | `docker run --rm -p 8501:8501 -e DUEDIL_MODE=demo-ui duedil-agent:latest` |
+| **Hosted demo** | looking at the UI without installing anything | [duedil-agent.streamlit.app](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app) |
+| **Published image** | running the current release without building | `docker run --rm -p 8501:8501 ghcr.io/sergeyger/duedil-agent:latest` |
+| **Docker Compose** | a demo in one command from a clone | `docker compose up --build` |
+| **Docker, offline demo** | seeing the pipeline with no keys and no cost | `docker run --rm -p 8501:8501 -e DUEDIL_MODE=demo-ui ghcr.io/sergeyger/duedil-agent:latest` |
 | **Local virtualenv** | development, running the tests | `python -m venv .venv && pip install -r requirements.txt` |
 | **Package install** | using `duedil` as a CLI tool | `pip install -e ".[dev]"` |
+
+### Tags published for each release
+
+[`.github/workflows/docker.yml`](https://github.com/SergeyGer/duedil-agent/blob/main/.github/workflows/docker.yml)
+builds `linux/amd64` **and** `linux/arm64` and pushes a multi-arch manifest on every
+`v*.*.*` tag:
+
+| Tag | Meaning |
+|---|---|
+| `0.2.0` | exact release |
+| `0.2` | latest patch of that minor line |
+| `0`, `latest` | latest stable release |
+| `edge` | head of a branch, published only by a manual `workflow_dispatch` run |
+
+The same workflow smoke-tests the image it just published: it starts it and waits for Docker's
+`HEALTHCHECK` (Streamlit's `/_stcore/health`) to report `healthy`, so a broken image fails the
+release instead of reaching users. GitHub Packages storage and Actions minutes are free for
+public repositories, and the build cache is reused between runs.
+
+### The hosted demo
+
+Streamlit Community Cloud deploys straight from `main` with `app/ui.py` as the entry point. It
+has **no secrets configured on purpose**: without keys, PDF parsing falls back to the local
+`pypdf` extractor, the agents run against a deterministic snapshot, and the pipeline still
+produces a memo — so anyone can click it and it costs nothing. Apps without traffic for 12 hours
+hibernate and wake on the next visit; the resource limits (~2 cores, 2.7 GB) leave comfortable
+headroom.
+
 
 ## Prerequisites
 
