@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 
-import _bootstrap  # noqa: F401  (sets up sys.path)
+import _bootstrap  # noqa: F401  # imported for its sys.path side effect
 from demo_offline import install_stubs
 
 install_stubs(delay=float(os.getenv("DUE_DIL_DEMO_DELAY", "0")))

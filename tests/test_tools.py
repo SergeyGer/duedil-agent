@@ -26,9 +26,12 @@ def test_stringify_list_of_dicts():
         {"title": "Beta", "url": "https://beta.ai", "content": "Beta competitor"},
     ]
     out = stringify_search_results(results)
-    assert "Acme" in out
-    assert "https://acme.ai" in out
-    assert "Beta competitor" in out
+    lines = out.splitlines()
+    # Compare whole rendered lines instead of substring-matching a URL: a substring
+    # check would also pass for "https://acme.ai.evil.example" (py/incomplete-url-
+    # substring-sanitization).
+    assert lines[0] == "- Acme (https://acme.ai): Acme is a startup"
+    assert lines[1] == "- Beta (https://beta.ai): Beta competitor"
 
 
 def test_stringify_dict_with_results_list():
@@ -37,8 +40,7 @@ def test_stringify_dict_with_results_list():
         "results": [{"title": "Acme", "url": "https://acme.ai", "content": "Acme is a startup"}],
     }
     out = stringify_search_results(payload)
-    assert "Acme is a startup" in out
-    assert "https://acme.ai" in out
+    assert out == "- Acme (https://acme.ai): Acme is a startup"
 
 
 def test_stringify_plain_dict_is_wrapped():

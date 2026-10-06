@@ -10,6 +10,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# The tests and lint jobs only read the repository; without an explicit block the
+# token would get the repository default (write) permissions
+# (actions/missing-workflow-permissions).
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Tests (Python ${{ matrix.python-version }})

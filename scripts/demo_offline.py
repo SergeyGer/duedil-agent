@@ -41,9 +41,6 @@ DEFAULT_EXAMPLE = REPO_ROOT / "examples" / "sample_memo.json"
 DEFAULT_FLAGS = REPO_ROOT / "examples" / "sample_offline_run.json"
 DEFAULT_DECK = REPO_ROOT / "examples" / "sample_deck.pdf"
 
-_MARKET_HEADER = "EXTERNAL MARKET DATA:"
-_FLAGS_HEADER = "\n\nRED FLAGS:"
-
 
 class _Response:
     """Minimal stand-in for a LangChain ``AIMessage`` (``_message_text`` reads ``.content``)."""
