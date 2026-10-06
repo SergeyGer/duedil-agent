@@ -49,7 +49,7 @@ jobs:
       - name: Install ruff
         # Pinned to match pyproject.toml ([dev]) and .pre-commit-config.yaml so a local
         # hook run and CI cannot disagree (see tests/test_tooling_pins.py).
-        run: pip install "ruff==0.16.8"
+        run: pip install "ruff==0.16.9"
 
       - name: Ruff check
         run: ruff check .

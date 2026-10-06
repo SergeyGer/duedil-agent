@@ -75,7 +75,10 @@ llama-index-workflows==2.25.0
 llama-parse==0.6.94
 MarkupSafe==3.0.3
 marshmallow==3.26.2
-multidict==7.0.0
+# Pinned by aiohttp (`multidict<7.0,>=4.5`), which has no release that accepts
+# multidict 7.x yet. Bumping this alone makes `pip install -r requirements.txt`
+# fail with ResolutionImpossible; re-freeze both together once aiohttp allows it.
+multidict==6.9.1
 mypy_extensions==1.1.0
 narwhals==2.26.0
 nest-asyncio==1.6.0
