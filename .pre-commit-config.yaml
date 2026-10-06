@@ -18,7 +18,7 @@ repos:
   # Keep this `rev` in sync with the `ruff` pin in pyproject.toml ([dev]) and the CI lint
   # job — tests/test_tooling_pins.py fails if the three diverge.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.9
+    rev: v0.16.10
     hooks:
       - id: ruff
         args: [--fix]
