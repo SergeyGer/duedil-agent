@@ -103,6 +103,44 @@ reachable; `_safe_json()` tolerates code fences, but not prose.
 Scanned pages are images. `pypdf` extracts nothing from them; LlamaParse (with
 `LLAMA_CLOUD_API_KEY`) handles them far better. If neither works, the deck needs OCR.
 
+### A hosted app answers `303` to `curl` — that is not a privacy problem
+
+Checking the hosted demo with `curl` returns `303` with a `location` pointing at
+`share.streamlit.io/-/auth/app`, which looks exactly like an app that is private. It is not:
+Streamlit Cloud answers the same way for **any** app, including ones that are certainly public
+(verified against `llm-examples.streamlit.app`), because the `303` is how it handles a request
+that is not a browser session. Use a real browser to judge visibility — a public app loads its
+UI and returns `200` with the app's own `Server`/HTML; a private one never renders.
+
+### The hosted app loads but stays empty (spinner, no content)
+
+The frontend is served while the Python process is not serving the app — the page returns `200`
+with zero rendered text. Distinguish the causes:
+
+| Observation in the Cloud logs | Cause |
+|---|---|
+| ends after `Uvicorn server started on :::8501`, nothing after | the script never ran, or the container was killed; check resource limits and the viewport at the bottom of *Manage app* |
+| `ModuleNotFoundError` / `ResolutionImpossible` | dependency install failed |
+| the app was recently made public or renamed | a redeploy is in flight — *Reboot* the app |
+
+Before blaming the code, reproduce the exact environment locally; it is cheap and decisive:
+
+```bash
+docker build -t repro -f - . <<'EOF'
+FROM python:3.14-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN python -m pip install --no-cache-dir -r requirements.txt
+COPY app ./app
+COPY .streamlit ./.streamlit
+CMD ["python", "-m", "streamlit", "run", "app/ui.py", "--server.port=8501", "--server.address=0.0.0.0"]
+EOF
+docker run --rm -p 8501:8501 repro
+```
+
+If that renders and the hosted one does not, the difference is the platform — start with the
+Python runtime shown in the log (`Using Python X.Y.Z environment`) and try another version.
+
 ### Streamlit reruns and loses the result
 
 Any widget change — including the language selector — triggers a rerun and clears the previous
