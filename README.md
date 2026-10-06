@@ -15,6 +15,11 @@
 [![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
+[![ghcr.io](https://img.shields.io/badge/ghcr.io-duedil--agent-2496ED?logo=github&logoColor=white)](https://github.com/SergeyGer/duedil-agent/pkgs/container/duedil-agent)
+
+**▶ [Try the live demo](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app)** — the real UI
+in a browser, no installation and no API keys.
+
 
 ---
 
@@ -85,22 +90,42 @@ exported as a styled PDF, with the complete evidence trail available as JSON.
 
 ---
 
-## Try it in one command
+## Try it
+
+**1 — In a browser, nothing to install:**
+
+▶ **[duedil-agent.streamlit.app](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app)**
+
+The Streamlit Community Cloud instance runs without API keys, so it never spends anything: PDF
+parsing falls back to the local `pypdf` extractor, the agents run against a deterministic
+snapshot, and the whole pipeline still produces a memo. It sleeps after 12 hours without
+visitors — the first visit takes ~30 seconds to wake it up.
+
+**2 — In Docker, using the published image (no build, no clone):**
+
+```bash
+docker run --rm -p 8501:8501 ghcr.io/sergeyger/duedil-agent:latest                        # real UI
+docker run --rm -p 8501:8501 -e DUEDIL_MODE=demo-ui ghcr.io/sergeyger/duedil-agent:latest  # offline demo
+```
+
+**3 — From source, with the full stack:**
 
 ```bash
 git clone https://github.com/SergeyGer/duedil-agent.git
 cd duedil-agent
+cp env.example .env              # optional: add your own keys for live model + web search
 docker compose up --build        # → http://localhost:8501
 ```
 
-No API keys? The interface still works and the pipeline still runs — it degrades to the
-deterministic mode and says so. To see the full agent behaviour with zero cost and no network:
+No API keys are required anywhere above: the interface still works and the pipeline still runs —
+it degrades to the deterministic mode and says so. To watch the *full* agent behaviour with zero
+cost and no network:
 
 ```bash
 make demo                        # offline run: the real graph, canned model and search
 ```
 
-Prefer Python? `pip install -r requirements.txt`, then either
+Prefer plain Python? `pip install -r requirements.txt`, then either
 `streamlit run app/ui.py` or `python -m app.cli deck.pdf https://startup.example`.
 Full instructions: [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment).
 
