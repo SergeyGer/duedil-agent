@@ -31,22 +31,14 @@ from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
-# UI strings the runner needs to find, per language.
-STRINGS: dict[str, dict[str, str]] = {
-    "en": {
-        "run": "Run due diligence",
-        "download": "Download PDF",
-        "running": "Running the agent pipeline",
-    },
-    "ru": {
-        "run": "Запустить проверку",
-        "download": "Скачать PDF",
-        "running": "Пайплайн агентов выполняется",
-    },
+# The UI is multilingual, but every artefact committed under docs/media/ is captured
+# in English so the README reads consistently. Only the labels the runner has to find
+# are listed here.
+STRINGS: dict[str, str] = {
+    "run": "Run due diligence",
+    "download": "Download PDF",
+    "running": "Running the agent pipeline",
 }
-
-# Language selector option -> language code.
-LANGUAGE_OPTIONS = {"English": "en", "Deutsch": "de", "Français": "fr", "Русский": "ru"}
 
 SIDEBAR = 'section[data-testid="stSidebar"]'
 
@@ -68,20 +60,6 @@ def _parse_shots(raw: str) -> list[str]:
     return [item.strip() for item in (raw or "").split(",") if item.strip()]
 
 
-def _select_language(page: Page, code: str) -> None:
-    """Pick a UI language in the sidebar selector (triggers a Streamlit rerun)."""
-
-    label = next(name for name, value in LANGUAGE_OPTIONS.items() if value == code)
-    # Streamlit renders `st.selectbox` as a React Aria ComboBox: the trigger is a
-    # readonly input inside `data-testid="stSelectbox"`, the options are generic
-    # `role="option"` elements (not `<li>` as in older BaseWeb builds).
-    box = page.locator(f'{SIDEBAR} div[data-testid="stSelectbox"]').first
-    box.locator("input").first.click()
-    _settle(page, 600)
-    page.locator('[role="option"]', has_text=label).first.click()
-    _settle(page, 2500)
-
-
 def _upload(page: Page, deck: Path) -> None:
     page.set_input_files(f'{SIDEBAR} input[type="file"]', str(deck))
     _settle(page, 2500)
@@ -101,7 +79,7 @@ def _shot(page: Page, out: Path, name: str) -> None:
     print(f"  saved {name}.png")
 
 
-def _run(page: Page, strings: dict[str, str], shots: list[str], out: Path, name: str) -> None:
+def _run(page: Page, strings: dict[str, str], shots: list[str], out: Path) -> None:
     """Click the run button, optionally catch the in-flight state, wait for the memo."""
 
     page.get_by_role("button", name=strings["run"], exact=False).first.click()
@@ -110,7 +88,7 @@ def _run(page: Page, strings: dict[str, str], shots: list[str], out: Path, name:
         try:
             page.wait_for_selector(f"text={strings['running']}", timeout=30000)
             page.wait_for_timeout(900)
-            _shot(page, out, f"ui-running{name}")
+            _shot(page, out, "ui-running")
         except Exception as exc:  # pragma: no cover - only if the run is too fast to catch
             print(f"  note: could not capture the in-flight state ({exc})")
 
@@ -127,8 +105,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--deck", default=os.getenv("CAPTURE_DECK", "examples/sample_deck.pdf"))
     parser.add_argument("--url", default=os.getenv("CAPTURE_SITE_URL", "https://nimbusai.example"))
     parser.add_argument("--out", default=os.getenv("CAPTURE_OUT", "docs/media"))
-    parser.add_argument("--lang", default=os.getenv("CAPTURE_LANG", "en"))
-    parser.add_argument("--second-lang", default=os.getenv("CAPTURE_SECOND_LANG", "ru"))
     parser.add_argument("--video-out", default=os.getenv("CAPTURE_VIDEO_OUT", ""))
     parser.add_argument("--shots", default=os.getenv("CAPTURE_SHOTS", "1"))
     parser.add_argument("--width", type=int, default=1440)
@@ -138,7 +114,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     shots = _parse_shots(args.shots)
-    lang = args.lang
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     video_dir = out / "_video"
@@ -162,28 +137,15 @@ def main(argv: list[str] | None = None) -> int:
         page.add_style_tag(content=HIDE_CHROME)
         page.wait_for_timeout(2000)
 
-        if lang != "en":
-            _select_language(page, lang)
-
         if "idle" in shots:
-            _shot(page, out, f"ui-idle-{lang}")
+            _shot(page, out, "ui-idle-en")
 
         _upload(page, deck)
         _fill_url(page, args.url)
-        _run(page, STRINGS[lang], shots, out, "" if lang == "en" else f"-{lang}")
+        _run(page, STRINGS, shots, out)
 
         if "results" in shots:
-            _shot(page, out, f"ui-results-{lang}")
-
-        if args.second_lang and args.second_lang != lang:
-            # Switching the language resets the session, so the pipeline has to run
-            # again for that language's screenshots to show real results.
-            _select_language(page, args.second_lang)
-            _upload(page, deck)
-            _fill_url(page, args.url)
-            _run(page, STRINGS[args.second_lang], [], out, f"-{args.second_lang}")
-            if "results" in shots:
-                _shot(page, out, f"ui-results-{args.second_lang}")
+            _shot(page, out, "ui-results-en")
 
         video = page.video
         context.close()  # finalises the video file
