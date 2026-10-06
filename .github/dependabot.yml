@@ -18,6 +18,10 @@ updates:
       - dependency-name: "pydantic-core"
       - dependency-name: "uuid-utils"
       - dependency-name: "llama-cloud"
+      # aiohttp requires `multidict<7.0`; bumping multidict on its own makes
+      # `pip install -r requirements.txt` fail with ResolutionImpossible, which is
+      # what broke this group's first PR. Re-enable once aiohttp allows 7.x.
+      - dependency-name: "multidict"
 
   - package-ecosystem: github-actions
     directory: "/"
