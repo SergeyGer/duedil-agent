@@ -93,9 +93,12 @@ missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a
 
 ## Demo
 
-The walkthrough below was recorded from the running Streamlit UI: pick a language, upload a
-pitch deck, press **Run due diligence** and watch the five agents work through the deck,
-the critic→scraper loop, the Red Flags and the final memo.
+The walkthrough below was recorded from the running Streamlit UI: upload a pitch deck, press
+**Run due diligence** and watch the five agents work through the deck, the critic→scraper loop,
+the Red Flags and the final memo.
+
+All screenshots and videos are captured in **English** — the UI also ships in German, French
+and Russian (`app/i18n.py`), but the documentation media deliberately uses one language.
 
 ### Offline demo (no API keys, no network)
 
@@ -110,10 +113,6 @@ run trips 13 Red Flags (including the deterministic ones) and ends in **REJECT**
 | Idle | Agents running | Result memo |
 |------|----------------|-------------|
 | ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result memo](docs/media/ui-results-en.png) |
-
-The same run in Russian (the UI ships in English, German, French and Russian):
-
-![Russian UI](docs/media/ui-results-ru.png)
 
 ### Live run (gpt-4o + Tavily + LlamaParse)
 
@@ -154,8 +153,8 @@ docker run --rm --network host -v "$PWD:/work" -w /work \
 ```
 
 `scripts/capture_demo.py` drives the UI with Playwright: it uploads a deck, waits for the
-memo and writes the frames and video to `docs/media/`. The live screenshots above were
-produced the same way against a UI started with real API keys.
+memo and writes the frames and video to `docs/media/`. It always captures the English UI. The
+live screenshots above were produced the same way against a UI started with real API keys.
 
 ---
 
