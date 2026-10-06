@@ -3,6 +3,7 @@
 > Autonomous multi-agent **due-diligence** system for technology startups — built on LangGraph.
 
 [![CI](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/SergeyGer/duedil-agent/actions/workflows/codeql.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/codeql.yml)
 [![Coverage](.github/badges/coverage.svg)](#testing--quality)
 [![Release](https://img.shields.io/github/v/release/SergeyGer/duedil-agent?sort=semver)](https://github.com/SergeyGer/duedil-agent/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -31,6 +32,7 @@ inconsistencies (Red Flags) and writes a structured **Deal Memo** exported as PD
 
 - [Why](#why)
 - [Key features](#key-features)
+- [Demo](#demo)
 - [Architecture](#architecture)
   - [Graph topology](#graph-topology)
   - [Agents](#agents)
@@ -85,6 +87,75 @@ missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a
 - **Multilingual UI** — the Streamlit interface ships in English (default), German, French
   and Russian.
 - **Observability** — one env var enables full LangSmith tracing.
+- **Runs anywhere** — one-command Docker image (`docker compose up`), no local Python needed.
+
+---
+
+## Demo
+
+The walkthrough below was recorded from the running Streamlit UI: pick a language, upload a
+pitch deck, press **Run due diligence** and watch the five agents work through the deck,
+the critic→scraper loop, the Red Flags and the final memo.
+
+### Offline demo (no API keys, no network)
+
+`python scripts/demo_offline.py` runs the **real** graph, parser, critic heuristics and PDF
+export with canned LLM/search responses, so it is fully reproducible and free of charge. The
+run trips 13 Red Flags (including the deterministic ones) and ends in **REJECT**:
+
+<video src="docs/media/demo-offline.mp4" controls width="820"></video>
+
+[▶ offline demo (MP4, 25 s)](docs/media/demo-offline.mp4)
+
+| Idle | Agents running | Result memo |
+|------|----------------|-------------|
+| ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result memo](docs/media/ui-results-en.png) |
+
+The same run in Russian (the UI ships in English, German, French and Russian):
+
+![Russian UI](docs/media/ui-results-ru.png)
+
+### Live run (gpt-4o + Tavily + LlamaParse)
+
+A real end-to-end run on the bundled sample deck — LlamaParse extracts the PDF, Tavily
+searches the live web for the company, its founders and its traffic, `gpt-4o` extracts the
+metrics and writes the memo, and the critic loop fires twice (12 Red Flags, **REJECT**):
+
+<video src="docs/media/demo-live.mp4" controls width="820"></video>
+
+[▶ live run (MP4, 47 s)](docs/media/demo-live.mp4)
+
+![Live run results](docs/media/ui-results-live.png)
+
+### CLI
+
+```bash
+python -m app.cli examples/sample_deck.pdf https://nimbusai.example \
+    --out examples/sample_memo.pdf --md examples/sample_memo.md --json examples/sample_memo.json
+```
+
+| Live run (`gpt-4o`) | Offline demo run |
+|---------------------|------------------|
+| ![CLI live](docs/media/cli-live.png) | ![CLI offline](docs/media/cli-offline.png) |
+
+The generated memo as a styled PDF:
+
+![Memo PDF](docs/media/memo-pdf-live.png)
+
+### Reproducing these artefacts
+
+```bash
+make demo                      # offline pipeline run, writes data/nimbusai_memo.pdf
+
+# Screenshots + a video of the UI (needs a running UI on :8501)
+docker run --rm --network host -v "$PWD:/work" -w /work \
+    mcr.microsoft.com/playwright/python:v1.49.1-noble \
+    sh -c "pip install -q playwright==1.49.1 && python scripts/capture_demo.py"
+```
+
+`scripts/capture_demo.py` drives the UI with Playwright: it uploads a deck, waits for the
+memo and writes the frames and video to `docs/media/`. The live screenshots above were
+produced the same way against a UI started with real API keys.
 
 ---
 
@@ -189,13 +260,17 @@ DueDil.Agent/
 │   ├── utils.py           # numeric parsing, benchmarks, heuristics
 │   ├── report.py          # Markdown -> PDF (ReportLab)
 │   ├── ui.py              # Streamlit web UI
+│   ├── streamlit_app.py   # Docker entry point (ui / demo-ui modes)
 │   └── cli.py             # command-line interface
 ├── tests/                 # pytest suite (70 tests, ~92% coverage)
 ├── data/                  # uploaded decks & generated reports (git-ignored)
-├── assets/                # social-preview banner + UI screenshot
-├── scripts/               # helper scripts (sample deck, coverage badge, banner)
-├── docs/                  # architecture documentation (state, nodes, diagrams)
-├── .github/               # CI, release workflow, issue/PR templates
+├── assets/                # social-preview banner
+├── docs/                  # architecture docs + demo media (screenshots, video)
+├── scripts/               # helper scripts (sample deck, coverage badge, banner,
+│                          #  offline demo, Playwright capture)
+├── .github/               # CI, CodeQL, release workflow, issue/PR templates
+├── Dockerfile             # multi-stage image: Streamlit UI + CLI
+├── docker-compose.yml     # ui + cli services, healthcheck, named data volume
 ├── pyproject.toml         # metadata, entry point, pytest & ruff config
 ├── requirements.txt       # pinned lockfile (pip freeze)
 ├── env.example            # environment variable template
@@ -229,11 +304,40 @@ The test suite is fully **offline** (no API keys or network) and lives in `tests
 
 ### Prerequisites
 
-- Python **3.11+**
+- Python **3.11+** — *or* Docker, if you would rather not install anything locally
 - API keys: an LLM provider (OpenAI **or** Anthropic), plus LlamaParse and Tavily
   (the latter two are optional — the app degrades gracefully without them).
 
-### Installation
+### Docker (no local Python needed)
+
+```bash
+git clone https://github.com/SergeyGer/duedil-agent.git
+cd duedil-agent
+cp env.example .env          # optional: without it the app still runs (fallback mode)
+
+docker compose up --build    # -> http://localhost:8501
+```
+
+The image bundles the pinned lockfile and runs as a non-root user with a
+`HEALTHCHECK` on Streamlit's `/_stcore/health` endpoint.
+
+| What | Command |
+|------|---------|
+| Web UI | `docker compose up --build` (or `make docker-run`) |
+| Web UI, offline demo (no keys, canned agents) | `docker run --rm -p 8501:8501 -e DUEDIL_MODE=demo-ui duedil-agent:latest` |
+| CLI on the bundled sample deck | `make docker-cli` |
+| CLI in general | `docker run --rm --env-file .env -v "$PWD/examples:/app/examples:ro" duedil-agent:latest python -m app.cli examples/sample_deck.pdf https://nimbusai.example` |
+
+Generated memos land in the `duedil-data` volume (`docker compose run --rm cli ...`);
+attaching a host path instead works too, as long as it is writable by UID `10001`:
+
+```bash
+mkdir -p data && docker run --rm -u "$(id -u):$(id -g)" --env-file .env \
+    -v "$PWD/data:/app/data" -v "$PWD/examples:/app/examples:ro" \
+    duedil-agent:latest python -m app.cli examples/sample_deck.pdf https://nimbusai.example
+```
+
+### Local installation
 
 ```bash
 git clone https://github.com/SergeyGer/duedil-agent.git
@@ -258,6 +362,12 @@ No pitch deck handy? Generate a synthetic one for testing:
 
 ```bash
 python scripts/make_sample_deck.py   # -> data/sample_deck.pdf
+```
+
+Want to see the whole pipeline without spending a token?
+
+```bash
+make demo                            # offline run: real graph, canned LLM/search
 ```
 
 ---
@@ -421,6 +531,24 @@ CI runs the tests (with coverage), Ruff and the [pre-commit](https://pre-commit.
 every push/PR. The coverage badge above is
 generated locally and committed automatically by the
 [`coverage` workflow](.github/workflows/coverage.yml) — no third-party service required.
+
+### Code scanning
+
+The [`CodeQL` workflow](.github/workflows/codeql.yml) analyses the Python sources and the
+GitHub Actions workflows on every push, every PR and once a week. It uses the
+`security-and-quality` query suite, so the results cover **vulnerabilities and coding
+errors/alerts** — findings and their history live in
+[Security → Code scanning](https://github.com/SergeyGer/duedil-agent/security/code-scanning).
+
+```bash
+# Lint the workflow locally before pushing
+pip install yamllint && yamllint .github/workflows/codeql.yml
+```
+
+Dependency advisories are handled separately: Dependabot alerts/updates are enabled on the
+repository, and transitive pins that must move together are ignored explicitly in
+[`.github/dependabot.yml`](.github/dependabot.yml) (see also
+[`SECURITY.md`](SECURITY.md)).
 
 ---
 

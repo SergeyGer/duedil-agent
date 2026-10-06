@@ -1,0 +1,63 @@
+# DueDil.Agent — one-command local stack.
+#
+#   cp env.example .env      # optional: without it the app degrades gracefully
+#   docker compose up --build
+#   open http://localhost:8501
+#
+# The CLI is a separate, profile-gated service (it exits when the run finishes):
+#
+#   docker compose run --rm cli examples/sample_deck.pdf https://nimbusai.example
+#
+# `docker compose run` always mounts the volumes below, and the named volume owns
+# /app/data, so the container writes memos with `duedil` ownership rather than
+# leaving root-owned files behind on the host.
+
+services:
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: duedil-agent:latest
+    container_name: duedil-agent-ui
+    # `required: false` keeps the stack bootable without a .env (no LLM keys ->
+    # pypdf parsing + deterministic fallback memo).
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8501:8501"
+    volumes:
+      # Named volume for generated reports/uploads: the container runs as a
+      # non-root user, which cannot write into a root-owned bind mount.
+      - duedil-data:/app/data
+      # Read-only access to the bundled sample deck.
+      - ./examples:/app/examples:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=4).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Usage: docker compose run --rm cli <deck.pdf> [url] [options]
+  cli:
+    profiles: ["cli"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: duedil-agent:latest
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - duedil-data:/app/data
+      - ./examples:/app/examples:ro
+    entrypoint: ["python", "-m", "app.cli"]
+
+volumes:
+  duedil-data:
