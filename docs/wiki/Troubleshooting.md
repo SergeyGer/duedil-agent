@@ -62,7 +62,7 @@ named volume, or run as your own UID:
 
 ```bash
 docker run --rm -u "$(id -u):$(id -g)" --env-file .env \
-    -v "$PWD/data:/app/data" duedil-agent:latest python -m app.cli ... 
+    -v "$PWD/data:/app/data" duedil-agent:latest python -m app.cli ...
 ```
 
 ### The container is `unhealthy`
