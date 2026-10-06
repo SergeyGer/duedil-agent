@@ -1,0 +1,17 @@
+{
+  "_comment": "Canned external responses for scripts/demo_offline.py (offline demo, no API keys). The deterministic Red-Flag heuristics and everything else still run for real.",
+  "llm_red_flags": [
+    "NimbusAI claims a team size of 14, but LinkedIn data shows only 11-50 employees, which is a broad range and lacks specificity.",
+    "The startup claims to be a 'market leader in AI support automation,' yet there is no mention of NimbusAI among top competitors in the B2B SaaS sector.",
+    "The ARR of $1.2M and MRR of $100K seem high given the lack of significant web traffic or notable market presence.",
+    "The founding year of NimbusAI is [NOT_FOUND], which is a critical piece of information missing from the pitch deck.",
+    "There is no evidence of NimbusAI's claimed leadership in AI support automation in the external market data.",
+    "The TAM of $14B appears inflated without supporting evidence of NimbusAI's market penetration or competitive positioning.",
+    "NimbusAI claims to be a 'market leader in AI support automation', yet there is no substantial evidence of their market presence or leadership in the external data.",
+    "The startup claims an ARR of $1.2M and MRR of $100K, but there is no corroborating evidence such as customer testimonials or financial disclosures to support these figures.",
+    "The LinkedIn data shows only 21 associated members, which contradicts the claimed team size of 14 employees, suggesting potential inflation of team size.",
+    "The founding year of NimbusAI is [NOT_FOUND], which is a critical missing piece of information for assessing the company's maturity and track record.",
+    "The TAM of $14B appears inflated given the lack of evidence of significant market penetration or leadership by NimbusAI.",
+    "There is no evidence of any funding rounds or investors, which raises questions about the financial backing and sustainability of NimbusAI."
+  ]
+}

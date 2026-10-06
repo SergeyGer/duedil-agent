@@ -1,0 +1,50 @@
+# Keep the build context small and make the image independent of the host state.
+# Anything excluded here is also excluded from `COPY` in the Dockerfile.
+
+# Version control / CI / editor noise
+.git
+.gitignore
+.gitattributes
+.github
+.editorconfig
+.pre-commit-config.yaml
+
+# Python caches and virtualenvs
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.egg-info
+build
+dist
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Secrets: never ship a local .env or GitHub token into an image layer
+.env
+.env.*
+!.env.example
+.git-token
+.git-token.*
+
+# Generated reports and uploaded decks (mounted as a volume instead)
+data/*
+!data/.gitkeep
+
+# Docs/media that the runtime does not need
+docs
+assets
+tests
+Makefile
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+.dockerignore

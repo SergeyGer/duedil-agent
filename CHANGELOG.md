@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Docker support**: multi-stage `Dockerfile` (pinned lockfile, non-root user, Streamlit
+  `HEALTHCHECK`) plus `docker-compose.yml` with `ui` and `cli` services and a named data
+  volume. `DUEDIL_MODE=demo-ui` starts the image in offline demo mode.
+- **CodeQL code scanning** (`.github/workflows/codeql.yml`): Python + GitHub Actions analysis
+  on every push, PR and weekly, using the `security-and-quality` query suite.
+- **Reproducible demo tooling**: `scripts/demo_offline.py` (real graph, canned LLM/search, no
+  API keys), `scripts/demo_offline_ui.py` and `scripts/capture_demo.py` (Playwright
+  screenshots + walkthrough video).
+- Demo artefacts in `docs/media/`: UI screenshots (EN/RU), CLI transcripts and two videos
+  (offline demo, live `gpt-4o` run), all linked from the README.
+- `.dockerignore`, `Makefile` targets (`docker-build`, `docker-run`, `docker-demo`,
+  `docker-cli`, `demo`) and a `.gitignore` entry for a local `.git-token`.
+
+### Fixed
+
+- `multidict` is held at 6.x: `aiohttp` requires `multidict<7.0`, so the 7.0.0 bump made
+  `pip install -r requirements.txt` fail with `ResolutionImpossible`. Dependabot now skips it
+  until aiohttp allows 7.x.
+- The `ruff` pin is kept in sync across `.pre-commit-config.yaml`, `pyproject.toml` and the CI
+  lint job (0.16.9), which `tests/test_tooling_pins.py` enforces.
+
 ## [0.1.0] - 2026-09-22
 
 First public release.
