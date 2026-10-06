@@ -23,6 +23,9 @@ updates:
       # what broke this group's first PR. Re-enable once aiohttp allows 7.x.
       - dependency-name: "multidict"
 
+  # Workflow actions are pinned to commit SHAs (with the release tag in a trailing
+  # comment), so CodeQL's `actions/unpinned-tag` check stays quiet. Dependabot
+  # understands that layout and bumps both the SHA and the comment.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

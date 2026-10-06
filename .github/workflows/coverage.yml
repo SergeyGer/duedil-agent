@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  # Opening the badge pull request.
+  pull-requests: write
 
 concurrency:
   group: coverage-badge-${{ github.ref }}
@@ -19,10 +21,10 @@ jobs:
     # Never run on the badge's own commit (avoid an infinite loop).
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7
         with:
           python-version: "3.12"
           cache: pip
@@ -38,8 +40,29 @@ jobs:
       - name: Generate badge
         run: python scripts/coverage_badge.py .github/badges/coverage.svg
 
-      - name: Commit badge
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: "chore: update coverage badge [skip ci]"
-          file_pattern: ".github/badges/coverage.svg"
+      # `main` is protected by a ruleset (pull request + required status checks), so
+      # the badge can no longer be pushed straight to it (GH013). Open a pull request
+      # instead; `--auto` merges it once the required checks pass and degrades to a
+      # plain PR when auto-merge is disabled for the repository.
+      - name: Open a pull request with the refreshed badge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- .github/badges/coverage.svg; then
+            echo "Coverage badge is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b chore/coverage-badge
+          git add .github/badges/coverage.svg
+          git commit -m "chore: update coverage badge [skip ci]"
+          git push --force origin chore/coverage-badge
+
+          gh pr create --base "${{ github.ref_name }}" --head chore/coverage-badge \
+            --title "chore: update coverage badge" \
+            --body "Automated refresh of \`.github/badges/coverage.svg\` from the coverage workflow." \
+            || echo "A badge pull request is already open."
+          gh pr merge chore/coverage-badge --squash --auto \
+            || echo "Auto-merge unavailable (enable it in Settings -> General) - merge the PR manually."

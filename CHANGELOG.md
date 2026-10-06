@@ -29,6 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   until aiohttp allows 7.x.
 - The `ruff` pin is kept in sync across `.pre-commit-config.yaml`, `pyproject.toml` and the CI
   lint job (0.16.9), which `tests/test_tooling_pins.py` enforces.
+- The **coverage badge** workflow no longer pushes to `main` directly (the branch ruleset
+  rejects that with `GH013`): it opens a `chore/coverage-badge` pull request and asks for
+  auto-merge, so required checks still apply.
+
+### Security
+
+- Every workflow action is pinned to a commit SHA (release tag kept in a trailing comment),
+  clearing CodeQL's `actions/unpinned-tag` findings; Dependabot still bumps them weekly.
+- The first CodeQL scan's findings were resolved: two URL-substring assertions in
+  `tests/test_tools.py` now compare whole rendered lines, `ci.yml` declares
+  `permissions: contents: read`, and the unused helper constants/import are gone. See #14, #16.
 
 ## [0.1.0] - 2026-09-22
 

@@ -529,8 +529,10 @@ network required.
 
 CI runs the tests (with coverage), Ruff and the [pre-commit](https://pre-commit.com) hooks on
 every push/PR. The coverage badge above is
-generated locally and committed automatically by the
-[`coverage` workflow](.github/workflows/coverage.yml) — no third-party service required.
+generated locally and refreshed automatically by the
+[`coverage` workflow](.github/workflows/coverage.yml), which opens a
+`chore/coverage-badge` pull request (with auto-merge) because `main` is protected by a
+ruleset — no third-party service required.
 
 ### Code scanning
 
