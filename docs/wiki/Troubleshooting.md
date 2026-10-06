@@ -141,6 +141,47 @@ docker run --rm -p 8501:8501 repro
 If that renders and the hosted one does not, the difference is the platform — start with the
 Python runtime shown in the log (`Using Python X.Y.Z environment`) and try another version.
 
+### A blank hosted page: what turned out to be true
+
+A long debugging session on Community Cloud ended with a boring answer, worth recording so it is
+not repeated:
+
+| Check | Result |
+|---|---|
+| Cloud log after the last restart | `Uvicorn server started`, then **no** `🔌 Disconnecting...` for hours — the app was healthy |
+| A three-line app from the same repository | rendered fine → the platform runs arbitrary scripts |
+| `curl` and a headless browser **from a datacenter IP** | blank page every time, no console error |
+| The same URL in the owner's home browser | full UI, working pipeline |
+| Three hypotheses reproduced locally (Python 3.12 vs 3.14, `starlette` 1.7.0 vs 0.49.1, exact runtime in Docker) | all fine → hypotheses dead |
+
+**Conclusions.** (1) A blank page seen from one machine is not proof that an app is down: the
+platform can serve the frontend shell to some clients and not others, and it appears to treat
+datacenter traffic differently. Before believing a blank render, check the log for repeated
+`Disconnecting` / restart cycles — a healthy log plus a blank page from a datacenter means the
+observation point is the problem. (2) `curl` tells you nothing about a Streamlit Cloud app; see the
+`303` entry above.
+
+### `scripts/import_probe.py` — when a blank page *is* the app's fault
+
+If the log does show restart cycles and still no traceback, use the staged import probe: it imports
+the whole dependency chain one step at a time and prints every result to the page **and** to
+stdout, so the last line in the Cloud log names the import that killed the process. Deploy it as
+its own app (**Main file path**: `scripts/import_probe.py`) because the platform no longer offers
+a branch/file switcher for existing apps. If every import passes, the probe renders the real UI,
+so it doubles as a drop-in entry point.
+
+### `pyarrow` is replaced on Community Cloud
+
+The platform log contains a deliberate substitution:
+
+```
+Detected pyarrow 25.0.1 (known segfault, apache/arrow#50471). Replacing with pyarrow<25.
+```
+
+That is Streamlit's own workaround, not a failure — the pinned `pyarrow` is downgraded inside the
+Cloud environment. Expect the Cloud log to disagree with the lockfile in exactly this way; it is
+not drift in the repository.
+
 ### Streamlit reruns and loses the result
 
 Any widget change — including the language selector — triggers a rerun and clears the previous
