@@ -37,3 +37,6 @@ data/*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local verification scratch space (browser checks, screenshots)
+.appcheck/
