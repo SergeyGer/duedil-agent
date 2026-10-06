@@ -1,640 +1,190 @@
 # DueDil.Agent
 
-> Autonomous multi-agent **due-diligence** system for technology startups — built on LangGraph.
+> **An autonomous due-diligence analyst.** Feed it a startup's pitch deck and website; five
+> specialised AI agents verify every claim against live web data and produce a board-ready
+> investment memo — in minutes, with the evidence trail attached.
 
 [![CI](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/SergeyGer/duedil-agent/actions/workflows/codeql.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/actions/workflows/codeql.yml)
-[![Coverage](.github/badges/coverage.svg)](#testing--quality)
+[![CodeQL](https://github.com/SergeyGer/duedil-agent/actions/workflows/codeql.yml/badge.svg)](https://github.com/SergeyGer/duedil-agent/security/code-scanning)
+[![Coverage](.github/badges/coverage.svg)](#engineering-standards)
 [![Release](https://img.shields.io/github/v/release/SergeyGer/duedil-agent?sort=semver)](https://github.com/SergeyGer/duedil-agent/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-1C3C3C?logo=langchain&logoColor=white)](https://github.com/langchain-ai/langgraph)
-[![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?logo=langchain&logoColor=white)](https://python.langchain.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
-[![Anthropic](https://img.shields.io/badge/Anthropic-Claude-D4A27F)](https://www.anthropic.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Tavily](https://img.shields.io/badge/Tavily-web%20search-4B5563)](https://tavily.com/)
-[![LlamaParse](https://img.shields.io/badge/LlamaParse-PDF%20parsing-6E56CF)](https://cloud.llamaindex.ai/)
-[![ReportLab](https://img.shields.io/badge/ReportLab-PDF%20export-2C5E8E)](https://www.reportlab.com/)
-[![LangSmith](https://img.shields.io/badge/LangSmith-tracing-1C3C3C)](https://smith.langchain.com/)
-[![pytest](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)](https://pytest.org/)
-[![Ruff](https://img.shields.io/badge/lint-ruff-000000?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
-
-**DueDil.Agent** turns a raw pitch deck into a board-ready investment memo. You upload a
-startup's PDF deck and its website URL; a graph of specialised LLM agents extracts the
-claimed metrics, verifies them against live web data, benchmarks the financials, hunts for
-inconsistencies (Red Flags) and writes a structured **Deal Memo** exported as PDF.
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
 
 ---
 
-## Table of contents
+## See it work
 
-- [Why](#why)
-- [Key features](#key-features)
-- [Demo](#demo)
-- [Architecture](#architecture)
-  - [Graph topology](#graph-topology)
-  - [Agents](#agents)
-  - [Shared state (`VentureState`)](#shared-state-venturestate)
-  - [Conditional routing & loop protection](#conditional-routing--loop-protection)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Configuration](#configuration)
-- [Usage](#usage)
-  - [CLI](#cli)
-  - [Streamlit UI](#streamlit-ui)
-  - [Python API](#python-api)
-- [Output](#output)
-- [Examples](#examples)
-- [Testing & quality](#testing--quality)
-- [Releasing](#releasing)
-- [Design decisions](#design-decisions)
-- [Limitations & roadmap](#limitations--roadmap)
-- [Disclaimer](#disclaimer)
-- [License](#license)
-
----
-
-## Why
-
-Manual first-pass due diligence is slow and inconsistent: an analyst re-reads the deck,
-Googles the founders, checks competitors, sanity-checks the revenue figures and then writes
-a memo. DueDil.Agent automates that first pass as a **deterministic, auditable graph** rather
-than a single opaque prompt.
-
-The design goal is to **never trust the deck**. Every claimed number is either corroborated
-by external evidence or explicitly flagged. Agents are forbidden from inventing data — a
-missing figure is reported as `[NOT_FOUND]` and becomes a Red Flag rather than a guess.
-
----
-
-## Key features
-
-- **Multi-agent orchestration** — five specialised nodes coordinated by LangGraph with a
-  shared, typed state.
-- **Critic feedback loop** — the Critic can send the graph back to the Scraper for a
-  targeted second search, hard-capped at **2 iterations** (no runaway loops).
-- **Live verification** — Tavily web search for competitors, traffic and founder footprint.
-- **Financial benchmarking** — `ARR / headcount` vs. the B2B-SaaS norm (>$100k/employee).
-- **Hybrid Red-Flag detection** — LLM reasoning **plus** deterministic rule-based checks
-  (team-size mismatch, inflated "leadership" claims vs. near-zero traffic, missing ARR).
-- **Professional PDF export** — Markdown memo rendered to a styled PDF via ReportLab.
-- **Two front-ends** — a Streamlit web UI **and** a scriptable CLI.
-- **Graceful degradation** — missing API keys or LLM failures fall back to a
-  deterministic memo instead of crashing the graph.
-- **Multilingual UI** — the Streamlit interface ships in English (default), German, French
-  and Russian.
-- **Observability** — one env var enables full LangSmith tracing.
-- **Runs anywhere** — one-command Docker image (`docker compose up`), no local Python needed.
-
----
-
-## Demo
-
-The walkthrough below was recorded from the running Streamlit UI: upload a pitch deck, press
-**Run due diligence** and watch the five agents work through the deck, the critic→scraper loop,
-the Red Flags and the final memo.
-
-All screenshots and videos are captured in **English** — the UI also ships in German, French
-and Russian (`app/i18n.py`), but the documentation media deliberately uses one language.
-
-### Offline demo (no API keys, no network)
-
-`python scripts/demo_offline.py` runs the **real** graph, parser, critic heuristics and PDF
-export with canned LLM/search responses, so it is fully reproducible and free of charge. The
-run trips 13 Red Flags (including the deterministic ones) and ends in **REJECT**:
+A real run on a sample pitch deck — five agents, two passes of critical re-verification, and a
+memo that ends in **REJECT** because the deck does not survive scrutiny:
 
 <video src="docs/media/demo-offline.mp4" controls width="820"></video>
 
-[▶ offline demo (MP4, 25 s)](docs/media/demo-offline.mp4)
+[▶ watch the 25-second walkthrough](docs/media/demo-offline.mp4) ·
+[the same pipeline against real APIs (47 s)](docs/media/demo-live.mp4)
 
-| Idle | Agents running | Result memo |
-|------|----------------|-------------|
-| ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result memo](docs/media/ui-results-en.png) |
+| Upload a deck | Agents work through it | Out comes the memo |
+|---|---|---|
+| ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result](docs/media/ui-results-en.png) |
 
-### Live run (gpt-4o + Tavily + LlamaParse)
+---
 
-A real end-to-end run on the bundled sample deck — LlamaParse extracts the PDF, Tavily
-searches the live web for the company, its founders and its traffic, `gpt-4o` extracts the
-metrics and writes the memo, and the critic loop fires twice (12 Red Flags, **REJECT**):
+## The problem it solves
 
-<video src="docs/media/demo-live.mp4" controls width="820"></video>
+First-pass due diligence is slow, repetitive and inconsistent: read the deck, search the
+founders, check the competitors, sanity-check the revenue, write the memo — and two analysts
+produce two different memos from the same deck.
 
-[▶ live run (MP4, 47 s)](docs/media/demo-live.mp4)
+The expensive part is not the writing. **It is that nothing in the deck is verified.**
 
-![Live run results](docs/media/ui-results-live.png)
+DueDil.Agent automates that first pass as a deterministic pipeline instead of one opaque
+prompt. Its guiding rule: *never trust the deck*. Every number is either corroborated by
+external evidence or explicitly flagged — a missing figure is reported as `[NOT_FOUND]`, never
+guessed.
 
-### CLI
+| | Manual first pass | DueDil.Agent |
+|---|---|---|
+| Time to a written memo | 2–4 hours | ~2 minutes |
+| Evidence behind each claim | In the analyst's head | Quoted in the artefact, with the source data attached |
+| Consistency between analysts | Varies | Same pipeline, same rules, same output shape |
+| Obvious contradictions | Missed when tired | Caught by deterministic rules, every time |
+| Cost per review | Analyst hours | Cents of model and search calls |
 
-```bash
-python -m app.cli examples/sample_deck.pdf https://nimbusai.example \
-    --out examples/sample_memo.pdf --md examples/sample_memo.md --json examples/sample_memo.json
-```
+---
 
-| Live run (`gpt-4o`) | Offline demo run |
-|---------------------|------------------|
-| ![CLI live](docs/media/cli-live.png) | ![CLI offline](docs/media/cli-offline.png) |
+## What it does
 
-The generated memo as a styled PDF:
+**Five specialised agents, one deterministic pipeline**
+
+1. **Extractor** — reads the deck and pulls out the claimed metrics.
+2. **Scraper** — searches the live web: competitors, traffic, founder footprint.
+3. **Financial** — benchmarks `ARR / headcount` against the B2B-SaaS norm.
+4. **Critic** — cross-checks every claim and hunts for Red Flags.
+5. **Supervisor** — writes the memo and the recommendation.
+
+**What makes the result trustworthy**
+
+- **Hybrid Red-Flag detection** — LLM judgement *plus* deterministic rules that cannot be
+  talked out of a contradiction.
+- **Bounded self-correction** — the Critic can send the graph back for a targeted second
+  search, hard-capped so cost and runtime stay predictable.
+- **Graceful degradation** — a missing key or a failed call narrows the analysis instead of
+  breaking the run.
+- **Deterministic fallback** — with no model reachable at all, it still produces a memo.
+
+**The deliverable** is a structured memo — executive summary, metrics, market analysis,
+financial audit, Red Flags, and a recommendation of `INVEST` / `DEEP AUDIT` / `REJECT` —
+exported as a styled PDF, with the complete evidence trail available as JSON.
 
 ![Memo PDF](docs/media/memo-pdf-live.png)
 
-### Reproducing these artefacts
-
-```bash
-make demo                      # offline pipeline run, writes data/nimbusai_memo.pdf
-
-# Screenshots + a video of the UI (needs a running UI on :8501)
-docker run --rm --network host -v "$PWD:/work" -w /work \
-    mcr.microsoft.com/playwright/python:v1.49.1-noble \
-    sh -c "pip install -q playwright==1.49.1 && python scripts/capture_demo.py"
-```
-
-`scripts/capture_demo.py` drives the UI with Playwright: it uploads a deck, waits for the
-memo and writes the frames and video to `docs/media/`. It always captures the English UI. The
-live screenshots above were produced the same way against a UI started with real API keys.
-
 ---
 
-## Architecture
-
-For a deeper dive — state fields, per-node specs, a sequence diagram and extension points —
-see [`docs/architecture.md`](docs/architecture.md).
-
-### Graph topology
-
-```mermaid
-flowchart LR
-    START([Start]) --> EX[agent_extractor]
-    EX --> SC[agent_scraper]
-    SC --> FI[agent_financial]
-    FI --> CR[agent_critic]
-    CR -->|red_flags and loops < 2| SC
-    CR -->|clean or loops >= 2| SU[agent_supervisor]
-    SU --> END([End])
-```
-
-```
-START -> agent_extractor -> agent_scraper -> agent_financial -> agent_critic
-                                   ^                                   |
-                                   |                        route_after_critic
-                                   |  (flags and loops < 2)            |
-                                   +-----------------------------------+
-                                                                       |
-                                        (clean or loops >= 2)          v
-                                                      agent_supervisor -> END
-```
-
-### Agents
-
-| Node | Module | Responsibility |
-|------|--------|----------------|
-| `agent_extractor` | `app/graph.py` | Reads `pitch_deck_raw`, extracts structured metrics via a strict prompt. Missing data becomes `[NOT_FOUND]`. Never invents numbers. |
-| `agent_scraper` | `app/graph.py` | Uses Tavily to find the 3 main competitors, website traffic and founder/LinkedIn footprint. On a repeat pass, queries are driven by `critic_feedback`. |
-| `agent_financial` | `app/graph.py` | Computes `ARR / team_size` and benchmarks it against the B2B-SaaS norm (>$100k). Emits a verdict. |
-| `agent_critic` | `app/graph.py` | Cross-checks claims vs. market data (LLM **and** deterministic rules), accumulates Red Flags, increments `critic_loops_count`, produces the next search instruction. |
-| `agent_supervisor` | `app/graph.py` | Assembles the final Markdown memo: Summary -> Metrics -> Market -> Financial audit -> Red Flags -> Recommendation (**INVEST / DEEP AUDIT / REJECT**). |
-
-### Shared state (`VentureState`)
-
-Defined in [`app/state.py`](app/state.py) as a `TypedDict`. Agents never chatter — they read
-and return partial updates against this single source of truth.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `pitch_deck_raw` | `str` | Full text extracted from the PDF. |
-| `extracted_metrics` | `dict` | Structured metrics (name, ARR, team size, TAM, sector...). |
-| `market_data` | `list[str]` | External search results (competitors, traffic, founders). |
-| `financial_benchmarks` | `dict` | Computed ratios (ARR/employee) + market comparison. |
-| `red_flags` | `list[str]` | Detected inconsistencies, hallucinations and business risks. |
-| `critic_loops_count` | `int` | Number of Critic -> Scraper passes (max 2). |
-| `final_memo` | `str` | Final Markdown memo. |
-| `website_url`, `critic_feedback`, `progress_log`, `error` | — | Bookkeeping / observability fields. |
-
-### Conditional routing & loop protection
-
-```python
-def route_after_critic(state) -> str:
-    flags = state.get("red_flags") or []
-    loops = state.get("critic_loops_count", 0)
-    if flags and loops < MAX_CRITIC_LOOPS:   # MAX_CRITIC_LOOPS = 2
-        return "agent_scraper"               # targeted re-search
-    return "agent_supervisor"                # stop and write the memo
-```
-
-The loop is **hard-capped** at `MAX_CRITIC_LOOPS = 2`, guaranteeing termination.
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|-------|------------|
-| Language | Python 3.11+ |
-| Orchestration | LangGraph, LangChain Core/Community |
-| LLMs | `gpt-4o` (OpenAI) / `claude-3-5-sonnet` (Anthropic) |
-| Document parsing | LlamaParse (API) with a local `pypdf` fallback |
-| Web search | Tavily |
-| UI | Streamlit |
-| Observability | LangSmith |
-| Report export | ReportLab (Markdown -> PDF) |
-| Testing / lint | pytest, pytest-cov, Ruff |
-
----
-
-## Project structure
-
-```
-DueDil.Agent/
-├── app/
-│   ├── __init__.py        # package version
-│   ├── state.py           # VentureState(TypedDict) + initial_state()
-│   ├── config.py          # LLM factory (gpt-4o / claude-3-5-sonnet)
-│   ├── prompts.py         # system prompts for Extractor / Critic / Supervisor
-│   ├── tools.py           # Tavily search wrapper
-│   ├── parser.py          # PDF -> Markdown (LlamaParse + pypdf fallback)
-│   ├── graph.py           # agent nodes, graph assembly, routing, loop guard
-│   ├── utils.py           # numeric parsing, benchmarks, heuristics
-│   ├── report.py          # Markdown -> PDF (ReportLab)
-│   ├── ui.py              # Streamlit web UI
-│   ├── streamlit_app.py   # Docker entry point (ui / demo-ui modes)
-│   └── cli.py             # command-line interface
-├── tests/                 # pytest suite (70 tests, ~92% coverage)
-├── data/                  # uploaded decks & generated reports (git-ignored)
-├── assets/                # social-preview banner
-├── docs/                  # architecture docs + demo media (screenshots, video)
-├── scripts/               # helper scripts (sample deck, coverage badge, banner,
-│                          #  offline demo, Playwright capture)
-├── .github/               # CI, CodeQL, release workflow, issue/PR templates
-├── Dockerfile             # multi-stage image: Streamlit UI + CLI
-├── docker-compose.yml     # ui + cli services, healthcheck, named data volume
-├── pyproject.toml         # metadata, entry point, pytest & ruff config
-├── requirements.txt       # pinned lockfile (pip freeze)
-├── env.example            # environment variable template
-├── Makefile
-└── README.md
-```
-
-### Tests
-
-The test suite is fully **offline** (no API keys or network) and lives in `tests/`:
-
-| File | Covers |
-|------|--------|
-| `test_graph.py` | graph wiring, routing, the loop cap and the fallback memo (fake LLM) |
-| `test_critic.py` | deterministic Red-Flag heuristics |
-| `test_utils.py` | numeric parsing and financial benchmarks |
-| `test_parser.py` | PDF → Markdown (LlamaParse path + `pypdf` fallback) |
-| `test_report.py` | Markdown → PDF rendering |
-| `test_tools.py` | Tavily wrapper (`langchain-tavily` + community fallback) |
-| `test_config.py` | the LLM factory |
-| `test_cli.py` | CLI end-to-end against a mocked graph |
-| `test_i18n.py` | translation-table consistency across all languages |
-| `test_ui.py` | Streamlit smoke tests via `AppTest` |
-| `test_state.py` | state initialisation |
-| `test_tooling_pins.py` | the `ruff` pin in `pyproject.toml`, `.pre-commit-config.yaml` and CI stays in sync |
-| `conftest.py` | shared pytest setup (disables tracing during tests) |
-
----
-
-## Getting started
-
-### Prerequisites
-
-- Python **3.11+** — *or* Docker, if you would rather not install anything locally
-- API keys: an LLM provider (OpenAI **or** Anthropic), plus LlamaParse and Tavily
-  (the latter two are optional — the app degrades gracefully without them).
-
-### Docker (no local Python needed)
+## Try it in one command
 
 ```bash
 git clone https://github.com/SergeyGer/duedil-agent.git
 cd duedil-agent
-cp env.example .env          # optional: without it the app still runs (fallback mode)
-
-docker compose up --build    # -> http://localhost:8501
+docker compose up --build        # → http://localhost:8501
 ```
 
-The image bundles the pinned lockfile and runs as a non-root user with a
-`HEALTHCHECK` on Streamlit's `/_stcore/health` endpoint.
-
-| What | Command |
-|------|---------|
-| Web UI | `docker compose up --build` (or `make docker-run`) |
-| Web UI, offline demo (no keys, canned agents) | `docker run --rm -p 8501:8501 -e DUEDIL_MODE=demo-ui duedil-agent:latest` |
-| CLI on the bundled sample deck | `make docker-cli` |
-| CLI in general | `docker run --rm --env-file .env -v "$PWD/examples:/app/examples:ro" duedil-agent:latest python -m app.cli examples/sample_deck.pdf https://nimbusai.example` |
-
-Generated memos land in the `duedil-data` volume (`docker compose run --rm cli ...`);
-attaching a host path instead works too, as long as it is writable by UID `10001`:
+No API keys? The interface still works and the pipeline still runs — it degrades to the
+deterministic mode and says so. To see the full agent behaviour with zero cost and no network:
 
 ```bash
-mkdir -p data && docker run --rm -u "$(id -u):$(id -g)" --env-file .env \
-    -v "$PWD/data:/app/data" -v "$PWD/examples:/app/examples:ro" \
-    duedil-agent:latest python -m app.cli examples/sample_deck.pdf https://nimbusai.example
+make demo                        # offline run: the real graph, canned model and search
 ```
 
-### Local installation
-
-```bash
-git clone https://github.com/SergeyGer/duedil-agent.git
-cd duedil-agent
-
-python -m venv .venv
-# Windows (PowerShell)
-.\.venv\Scripts\Activate.ps1
-# macOS / Linux
-# source .venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-Or install as a package (provides the `duedil` console script):
-
-```bash
-pip install -e ".[dev]"
-```
-
-No pitch deck handy? Generate a synthetic one for testing:
-
-```bash
-python scripts/make_sample_deck.py   # -> data/sample_deck.pdf
-```
-
-Want to see the whole pipeline without spending a token?
-
-```bash
-make demo                            # offline run: real graph, canned LLM/search
-```
+Prefer Python? `pip install -r requirements.txt`, then either
+`streamlit run app/ui.py` or `python -m app.cli deck.pdf https://startup.example`.
+Full instructions: [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment).
 
 ---
 
-## Configuration
+## Engineering standards
 
-Copy `env.example` to `.env` and fill in your keys:
+This is a portfolio project, so it is built the way production software is built — not as a
+notebook that happens to run.
 
-```bash
-# Windows
-copy env.example .env
-# macOS / Linux
-cp env.example .env
-```
-
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `OPENAI_API_KEY` | one of | OpenAI key (for `gpt-4o`). |
-| `ANTHROPIC_API_KEY` | one of | Anthropic key (for `claude-3-5-sonnet`). |
-| `DUE_DIL_MODEL` | no | Model id. Default `gpt-4o`. |
-| `LLAMA_CLOUD_API_KEY` | no | Enables high-quality PDF parsing. Falls back to `pypdf`. |
-| `TAVILY_API_KEY` | no | Enables live web verification. |
-| `LANGCHAIN_TRACING_V2` / `LANGSMITH_TRACING` | no | `true` to enable LangSmith tracing. |
-| `LANGCHAIN_API_KEY` / `LANGSMITH_API_KEY` | no | LangSmith key — a **service key** (`lsv2_sk_…`) is recommended for the app. |
-| `LANGCHAIN_ENDPOINT` / `LANGSMITH_ENDPOINT` | no | API origin. **EU organizations must use `https://eu.api.smith.langchain.com`.** |
-| `LANGCHAIN_PROJECT` / `LANGSMITH_PROJECT` | no | LangSmith project name. |
-| `LANGSMITH_WORKSPACE_ID` | no | Workspace UUID, only needed for keys scoped to several workspaces. |
-
-> **LangSmith gotcha:** the instance is a property of the *organization*, not of the key. If
-> your organization lives on the EU instance while the endpoint points at the US one, every
-> API call fails with `403 Forbidden` — for personal access tokens and service keys alike —
-> and `/info` still answers `200`, which makes it look like a broken key. Run
-> `python scripts/langsmith_key_check.py <key> [workspace-id]`: it probes both instances and
-> reports which one accepts the key.
-
-> **Windows note:** if the install path is long, enable *Long Paths*
-> (`LongPathsEnabled=1`) so packages like `llama-index-core` install cleanly.
+| Practice | How it shows up here |
+|---|---|
+| **Tested behaviour** | **79 automated tests, 90 % line coverage**, runnable offline in ~6 seconds; CI fails below 88 % |
+| **Static analysis** | **CodeQL** (`security-and-quality`) on every push, PR and weekly — [zero open alerts](https://github.com/SergeyGer/duedil-agent/security/code-scanning) |
+| **Continuous integration** | Every PR runs the tests on **Python 3.11, 3.12 and 3.13**, plus linting, formatting and pre-commit hygiene checks |
+| **Protected delivery** | `main` requires a pull request plus passing status checks; releases are tag-driven and verify that the tag matches the package version |
+| **Supply-chain discipline** | Every GitHub Action pinned to a commit SHA; Dependabot keeps them current weekly |
+| **Reproducibility** | Pinned lockfile, multi-stage Docker image, non-root runtime user, container healthcheck |
+| **Documentation as code** | The project ships a technical wiki, a reproducible offline demo, and a scripted screenshot/video capture |
+| **Honest engineering** | Known limits, failure modes and the one accepted upstream advisory are documented rather than hidden |
 
 ---
 
-## Usage
+## Under the hood, briefly
 
-### CLI
-
-```bash
-python -m app.cli deck.pdf https://startup.example
-```
-
-Options:
+A **LangGraph** pipeline of five nodes sharing one typed state. The Critic sits in a feedback
+loop that can request a targeted re-verification, capped at two passes so a run always
+terminates. Red Flags come from two independent sources — an LLM critic and deterministic
+heuristics — so an obvious contradiction is caught even on a bad model day. Every external
+dependency (model, PDF parser, web search) is optional and degrades gracefully.
 
 ```
-python -m app.cli <deck.pdf> [url] [options]
-
-  -o, --out PATH     Output PDF path (default: data/<company>_memo.pdf)
-      --md PATH      Also save the raw Markdown memo
-      --json PATH    Dump the full final state as JSON
-      --model ID     Override the LLM (e.g. claude-3-5-sonnet)
-      --quiet        Only print the final memo
-      --version      Show version and exit
+deck.pdf → Extractor → Scraper → Financial → Critic ⇄ Scraper (≤ 2 passes) → Supervisor → memo
 ```
 
-Full example:
+| | |
+|---|---|
+| **Orchestration** | LangGraph, LangChain |
+| **Models** | `gpt-4o` (OpenAI) · `claude-3-5-sonnet` (Anthropic) |
+| **Document parsing** | LlamaParse, with a local `pypdf` fallback |
+| **Live verification** | Tavily web search |
+| **Interfaces** | Streamlit (4 languages) · CLI · Python API |
+| **Export** | ReportLab (Markdown → styled PDF) |
+| **Observability** | LangSmith tracing, one environment variable |
+| **Packaging** | Docker + Docker Compose, pinned `pip` lockfile |
 
-```bash
-python -m app.cli pitch.pdf https://acme.ai \
-    --model claude-3-5-sonnet \
-    --out reports/acme.pdf \
-    --md reports/acme.md \
-    --json reports/acme.json
-```
-
-### Streamlit UI
-
-```bash
-streamlit run app/ui.py
-```
-
-Upload a PDF, paste the website URL, and watch the **step-by-step agent progress** as the
-graph streams events. The memo renders in Markdown with a **Download PDF** button.
-
-The interface is available in **English (default), German, French and Russian** — pick the
-language in the sidebar. Translations live in [`app/i18n.py`](app/i18n.py).
-
-<img src="assets/ui-screenshot.png" alt="DueDil.Agent Streamlit interface" width="720">
-
-### Python API
-
-```python
-from app.parser import parse_pdf_to_markdown
-from app.graph import run_due_diligence
-from app.report import markdown_to_pdf
-
-deck_text = parse_pdf_to_markdown("deck.pdf")
-state = run_due_diligence(deck_text, website_url="https://acme.ai")
-
-print(state["financial_benchmarks"]["verdict"])
-for flag in state["red_flags"]:
-    print("RED FLAG:", flag)
-
-markdown_to_pdf(state["final_memo"], "memo.pdf")
-```
+The technical reference — architecture, the Red-Flag rule set with its exact thresholds,
+configuration, deployment, design rationale and troubleshooting — lives in the
+**[Engineering Wiki](https://github.com/SergeyGer/duedil-agent/wiki)**.
 
 ---
 
-## Output
+## Where to go next
 
-The supervisor produces a Markdown memo; the same content is exported to a styled **PDF**
-(`data/<company>_memo.pdf`):
+| I want to… | Go to |
+|---|---|
+| Understand the product and its value | [Product Overview](https://github.com/SergeyGer/duedil-agent/wiki/Product-Overview) |
+| Review the architecture and state machine | [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture) |
+| See exactly how a Red Flag is raised | [Red-Flag Engine](https://github.com/SergeyGer/duedil-agent/wiki/Red-Flag-Engine) |
+| Run, deploy or extend it | [Installation](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment) · [Configuration](https://github.com/SergeyGer/duedil-agent/wiki/Configuration) · [Extending](https://github.com/SergeyGer/duedil-agent/wiki/Extending-the-System) |
+| Read the quality and security posture | [Testing & Quality Gates](https://github.com/SergeyGer/duedil-agent/wiki/Testing-and-Quality-Gates) · [Security & Limits](https://github.com/SergeyGer/duedil-agent/wiki/Security-and-Limits) |
+| Understand the trade-offs | [Design Decisions](https://github.com/SergeyGer/duedil-agent/wiki/Design-Decisions) |
+| Fix something that broke | [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) |
 
-```markdown
-# Investment Memo — Acme AI
-
-## 1. Executive Summary
-First-pass automated due diligence for Acme AI (B2B SaaS).
-
-## 2. Startup Metrics
-- ARR: $1.2M  |  Team: 10  |  TAM: $10B
-
-## 4. Financial Audit
-Healthy: ARR/employee of $120,000 exceeds the B2B SaaS benchmark of $100,000.
-
-## 5. Hidden Risks (Red Flags)
-- Claimed leadership but external traffic is near zero.
-
-## 6. Final Recommendation
-**DEEP AUDIT**
-```
+Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck, the
+generated memo as Markdown and PDF, and the full state JSON behind it.
 
 ---
 
-## Examples
+## Roadmap
 
-Ready-made inputs and outputs live in [`examples/`](examples/):
-
-| File | Description |
-|------|-------------|
-| [`sample_deck.pdf`](examples/sample_deck.pdf) | Synthetic pitch deck (NimbusAI). Regenerate with `python scripts/make_sample_deck.py`. |
-| [`sample_memo.md`](examples/sample_memo.md) | The generated deal memo (Markdown). |
-| [`sample_memo.pdf`](examples/sample_memo.pdf) | The same memo exported to PDF. |
-| [`sample_memo.json`](examples/sample_memo.json) | The full final `VentureState` (metrics, market data, benchmarks, red flags). |
-
-Regenerate the whole set with a single command:
-
-```bash
-python -m app.cli examples/sample_deck.pdf https://nimbusai.example \
-    --out examples/sample_memo.pdf --md examples/sample_memo.md --json examples/sample_memo.json
-```
-
-The sample run trips several **Red Flags** (a "market-leader" claim unsupported by external
-traffic, a team-size discrepancy vs. LinkedIn, and an ARR/employee below the SaaS benchmark) —
-a good illustration of the critic loop at work.
-
----
-
-## Testing & quality
-
-```bash
-pytest            # run the suite
-make cov          # tests + coverage report
-make lint         # ruff check
-make fmt          # ruff format
-```
-
-The suite (70 tests, ~92% line coverage of `app/`) covers numeric parsing, financial
-benchmarking, Red-Flag heuristics, the routing function, full graph execution with a fake
-LLM, the parser fallback, the Tavily wrapper and the CLI — all **offline**, no API keys or
-network required.
-
-CI runs the tests (with coverage), Ruff and the [pre-commit](https://pre-commit.com) hooks on
-every push/PR. The coverage badge above is
-generated locally and refreshed automatically by the
-[`coverage` workflow](.github/workflows/coverage.yml), which opens a
-`chore/coverage-badge` pull request (with auto-merge) because `main` is protected by a
-ruleset — no third-party service required.
-
-### Code scanning
-
-The [`CodeQL` workflow](.github/workflows/codeql.yml) analyses the Python sources and the
-GitHub Actions workflows on every push, every PR and once a week. It uses the
-`security-and-quality` query suite, so the results cover **vulnerabilities and coding
-errors/alerts** — findings and their history live in
-[Security → Code scanning](https://github.com/SergeyGer/duedil-agent/security/code-scanning).
-
-```bash
-# Lint the workflow locally before pushing
-pip install yamllint && yamllint .github/workflows/codeql.yml
-```
-
-Dependency advisories are handled separately: Dependabot alerts/updates are enabled on the
-repository, and transitive pins that must move together are ignored explicitly in
-[`.github/dependabot.yml`](.github/dependabot.yml) (see also
-[`SECURITY.md`](SECURITY.md)).
-
----
-
-## Releasing
-
-Releases are fully automated from Git tags — see
-[`.github/workflows/release.yml`](.github/workflows/release.yml).
-
-1. Bump `version` in `pyproject.toml` and add a `CHANGELOG.md` entry.
-2. Commit and push to `main`.
-3. Create and push an annotated tag:
-
-```bash
-git tag -a v0.2.0 -m "Release v0.2.0"
-git push origin v0.2.0
-```
-
-The workflow then:
-
-- verifies the tag matches `pyproject.toml`'s `version` (fails otherwise),
-- builds the sdist and wheel (`python -m build`),
-- creates a **GitHub Release** with auto-generated notes and the distribution attached.
-
-Tags containing `-rc`, `-beta` or `-alpha` are marked as **pre-releases**.
-
-### Optional: publishing to PyPI
-
-PyPI publishing is opt-in and uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
-(OIDC — no long-lived token):
-
-1. Configure a Trusted Publisher on PyPI for this repository and the `pypi` environment.
-2. Add a repository **variable** `PUBLISH_TO_PYPI` = `true`
-   (*Settings → Secrets and variables → Actions → Variables*).
-3. Push a tag — the `publish-pypi` job uploads the distribution automatically.
-
----
-
-## Design decisions
-
-- **Sequential Extractor -> Scraper** — the Scraper needs the company name and sector from
-  the Extractor to build meaningful queries, so the two are not parallelised.
-- **Hybrid critic** — LLM judgement is powerful but non-deterministic; deterministic rules
-  guarantee that obvious contradictions are always caught.
-- **Loop guard** — `MAX_CRITIC_LOOPS = 2` prevents infinite Critic <-> Scraper cycles.
-- **Graceful degradation** — every LLM/search call is wrapped so a missing key or a failed
-  request yields a fallback memo rather than a crash.
-- **Separation of rendering** — the graph emits Markdown; PDF generation lives in
-  `report.py`, keeping the graph testable without ReportLab.
-
----
-
-## Limitations & roadmap
-
-- Output quality depends on the quality of external search results (and on the LLM).
-- Numbers are parsed heuristically from prose; unusual formats may need manual review.
-- The memo is a **first-pass** artefact — not a substitute for human diligence.
-
-**Roadmap:** parallel competitor/founder scraping; caching of search results; per-sector
-benchmarks; multi-deck batch mode; evaluation harness with golden memos.
+- [ ] Parallel competitor and founder scraping (the three searches are independent today)
+- [ ] Per-sector financial benchmarks instead of a single SaaS norm
+- [ ] Caching of search results across runs
+- [ ] Multi-deck batch mode with a portfolio-level summary
+- [ ] An evaluation harness with golden memos to track analysis quality over time
 
 ---
 
 ## Disclaimer
 
-DueDil.Agent is an **automated analysis tool**. Its output is generated by LLMs and web
-search and may contain errors or omissions. It does **not** constitute investment advice.
-Always verify findings independently before making any investment decision.
+DueDil.Agent is an **automated analysis tool**. Its output is generated by LLMs and web search
+and may contain errors or omissions. It does **not** constitute investment advice. Always verify
+findings independently before making any investment decision.
 
----
-
-## License
-
-Released under the [MIT License](LICENSE).
-
-## Contributing
-
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). By participating you
-agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please report security issues
-privately as described in [SECURITY.md](SECURITY.md).
+Released under the [MIT License](LICENSE) · Contributions welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) · Security issues: [SECURITY.md](SECURITY.md)
