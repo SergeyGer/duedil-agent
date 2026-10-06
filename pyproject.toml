@@ -51,7 +51,7 @@ dev = [
   # Exact pin: `ruff format` output and the enabled lint rules change between releases, so
   # the pre-commit hook, a local `pip install -e ".[dev]"` and CI must all resolve to the
   # same version. tests/test_tooling_pins.py fails if the three pins diverge.
-  "ruff==0.16.9",
+  "ruff==0.16.10",
   "pre-commit>=4.0.0",
 ]
 
