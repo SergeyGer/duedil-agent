@@ -67,13 +67,15 @@ def main() -> int:
         print(f"    LANGCHAIN_ENDPOINT={endpoint}")
         if len(working) == 1 and working[0] == "EU":
             print("  (организация на EU-инстансе — US-эндпоинт для неё всегда отвечает 403)")
+        # Listing projects is optional extra detail: the key already answered 200, so a
+        # malformed or unexpected payload here must not change the verdict.
         try:
             projects = [
                 p["name"] for p in json.loads(call(f"{endpoint}/sessions?limit=10", key, ws)[1])
             ]
-            print(f"  Проекты в воркспейсе: {projects or '(пока нет)'}")
-        except Exception:
-            pass
+        except (ValueError, KeyError, TypeError):
+            projects = []
+        print(f"  Проекты в воркспейсе: {projects or '(пока нет)'}")
         return 0
 
     print("ВЕРДИКТ: ключ не принят ни на одном инстансе. Что проверить:")
