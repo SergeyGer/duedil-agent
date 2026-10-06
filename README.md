@@ -389,9 +389,18 @@ cp env.example .env
 | `DUE_DIL_MODEL` | no | Model id. Default `gpt-4o`. |
 | `LLAMA_CLOUD_API_KEY` | no | Enables high-quality PDF parsing. Falls back to `pypdf`. |
 | `TAVILY_API_KEY` | no | Enables live web verification. |
-| `LANGCHAIN_TRACING_V2` | no | `true` to enable LangSmith tracing. |
-| `LANGCHAIN_API_KEY` | no | LangSmith API key. |
-| `LANGCHAIN_PROJECT` | no | LangSmith project name. |
+| `LANGCHAIN_TRACING_V2` / `LANGSMITH_TRACING` | no | `true` to enable LangSmith tracing. |
+| `LANGCHAIN_API_KEY` / `LANGSMITH_API_KEY` | no | LangSmith key — a **service key** (`lsv2_sk_…`) is recommended for the app. |
+| `LANGCHAIN_ENDPOINT` / `LANGSMITH_ENDPOINT` | no | API origin. **EU organizations must use `https://eu.api.smith.langchain.com`.** |
+| `LANGCHAIN_PROJECT` / `LANGSMITH_PROJECT` | no | LangSmith project name. |
+| `LANGSMITH_WORKSPACE_ID` | no | Workspace UUID, only needed for keys scoped to several workspaces. |
+
+> **LangSmith gotcha:** the instance is a property of the *organization*, not of the key. If
+> your organization lives on the EU instance while the endpoint points at the US one, every
+> API call fails with `403 Forbidden` — for personal access tokens and service keys alike —
+> and `/info` still answers `200`, which makes it look like a broken key. Run
+> `python scripts/langsmith_key_check.py <key> [workspace-id]`: it probes both instances and
+> reports which one accepts the key.
 
 > **Windows note:** if the install path is long, enable *Long Paths*
 > (`LongPathsEnabled=1`) so packages like `llama-index-core` install cleanly.
