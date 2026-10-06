@@ -40,11 +40,18 @@ jobs:
       - name: Generate badge
         run: python scripts/coverage_badge.py .github/badges/coverage.svg
 
-      # `main` is protected by a ruleset (pull request + required status checks), so
-      # the badge can no longer be pushed straight to it (GH013). Publish the file on
-      # `chore/coverage-badge` and let that pull request carry it through the checks.
-      # The branch is refreshed on every run so the required checks always report and
-      # auto-merge can fire (CI runs on this branch, see ci.yml).
+      # `main` is protected by a ruleset (pull request + required status checks), so the
+      # badge cannot be pushed straight to it: that ended in `GH013` on every run.
+      #
+      # The refresh is published on `chore/coverage-badge` and offered as a pull request.
+      # It cannot merge itself, and that is a GitHub constraint rather than a bug: this
+      # job pushes with the built-in GITHUB_TOKEN, and GitHub suppresses workflow runs
+      # for events created by that token (loop prevention), so the required checks never
+      # report on the branch and auto-merge stays pending. Merge the PR when convenient -
+      # it only ever touches `.github/badges/coverage.svg`.
+      #
+      # To make it fully hands-off, check out with a GitHub App / PAT token instead
+      # (bypassing protection is also possible, but that defeats the ruleset).
       - name: Publish the badge on a pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,8 +67,8 @@ jobs:
           if ! gh pr view chore/coverage-badge >/dev/null 2>&1; then
             gh pr create --base "${{ github.ref_name }}" --head chore/coverage-badge \
               --title "chore: update coverage badge" \
-              --body "Automated refresh of \`.github/badges/coverage.svg\` from the coverage workflow. Merges itself once the required checks pass."
+              --body "Automated refresh of \`.github/badges/coverage.svg\` from the coverage workflow. Only this file changes; merge whenever convenient."
           fi
 
           gh pr merge chore/coverage-badge --squash --auto \
-            || echo "Auto-merge unavailable - merge the badge PR manually."
+            || echo "Auto-merge not armed - merge the badge pull request manually."

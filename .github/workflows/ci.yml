@@ -2,10 +2,11 @@ name: CI
 
 on:
   push:
-    # `chore/coverage-badge` is pushed by the coverage workflow itself: the
-    # required status checks of the `main` ruleset only report when CI runs on
-    # that branch, and without them the badge pull request can never auto-merge.
-    branches: [main, master, chore/coverage-badge]
+    # `chore/coverage-badge` deliberately is NOT listed: the coverage workflow pushes
+    # that branch with the built-in GITHUB_TOKEN, and GitHub suppresses workflow runs
+    # for events created by that token (loop prevention). The badge PR therefore stays
+    # "checks expected" and has to be merged by a human - see the coverage workflow.
+    branches: [main, master]
   pull_request:
   workflow_dispatch:
 
