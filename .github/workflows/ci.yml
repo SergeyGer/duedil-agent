@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    # `chore/coverage-badge` is pushed by the coverage workflow itself: the
+    # required status checks of the `main` ruleset only report when CI runs on
+    # that branch, and without them the badge pull request can never auto-merge.
+    branches: [main, master, chore/coverage-badge]
   pull_request:
   workflow_dispatch:
 
