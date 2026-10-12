@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -33,6 +34,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from app import graph as graph_module  # noqa: E402
+from app.offline_agents import OfflineExtractorLLM, OfflineSupervisorLLM  # noqa: E402
 from app.parser import parse_pdf_to_markdown  # noqa: E402
 from app.prompts import CRITIC_SYSTEM, EXTRACTOR_SYSTEM  # noqa: E402
 from app.report import markdown_to_pdf  # noqa: E402
@@ -40,6 +42,9 @@ from app.report import markdown_to_pdf  # noqa: E402
 DEFAULT_EXAMPLE = REPO_ROOT / "examples" / "sample_memo.json"
 DEFAULT_FLAGS = REPO_ROOT / "examples" / "sample_offline_run.json"
 DEFAULT_DECK = REPO_ROOT / "examples" / "sample_deck.pdf"
+
+#: Offline modes: recorded payloads, or a rule-based reading of the deck.
+OFFLINE_MODES = ("canned", "deck_aware")
 
 
 class _Response:
@@ -77,6 +82,35 @@ class CannedLLM:
         return _Response(self.memo)
 
 
+class DeckAwareLLM:
+    """Reads the deck it is given, then writes the memo from what it read.
+
+    The Extractor is answered by :class:`app.offline_agents.OfflineExtractorLLM`
+    (deterministic rules over the deck text) and the Supervisor by
+    :class:`app.offline_agents.OfflineSupervisorLLM` (a memo built from the metrics and
+    market notes). The Critic keeps the canned Red Flags, because the real deterministic
+    heuristics add their own findings on top of whatever it reports.
+    """
+
+    def __init__(self, red_flags: list[str], delay: float = 0.0) -> None:
+        self.red_flags = red_flags
+        self.delay = delay
+
+    def invoke(self, messages, **_: object) -> _Response:  # noqa: ANN001 - mimic LangChain
+        if self.delay:
+            time.sleep(self.delay)
+        system = str(getattr(messages[0], "content", "")).strip()
+        if system == EXTRACTOR_SYSTEM.strip():
+            return OfflineExtractorLLM().invoke(messages)
+        if system == CRITIC_SYSTEM.strip():
+            payload = {
+                "red_flags": self.red_flags,
+                "critic_feedback": "verify the team size and the traffic figures",
+            }
+            return _Response(json.dumps(payload, ensure_ascii=False))
+        return OfflineSupervisorLLM().invoke(messages)
+
+
 class CannedSearchTool:
     """Serves slices of the canned market data instead of calling Tavily."""
 
@@ -104,6 +138,23 @@ class CannedSearchTool:
         }
 
 
+def offline_mode() -> str | None:
+    """Return the offline mode the environment asks for, or ``None`` for a live run.
+
+    ``DUE_DIL_OFFLINE_MODE=deck_aware`` is the explicit switch used by the hosted demo.
+    The legacy ``DUEDIL_MODE`` (anything other than ``ui``) still means "offline", and
+    defaults to the canned payloads so existing recordings stay reproducible.
+    """
+
+    explicit = (os.getenv("DUE_DIL_OFFLINE_MODE") or "").strip().lower()
+    if explicit in OFFLINE_MODES:
+        return explicit
+    legacy = (os.getenv("DUEDIL_MODE") or "ui").strip().lower()
+    if legacy != "ui":
+        return "canned" if legacy == "demo-ui" else "deck_aware"
+    return None
+
+
 def _market_blocks() -> list[str]:
     """Reconstruct the ``market_data`` list from the committed example state."""
 
@@ -122,18 +173,35 @@ def _canned_payload() -> tuple[dict, str, list[str]]:
     )
 
 
-def install_stubs(delay: float = 0.0) -> None:
-    """Swap the LLM and the search tool for canned, in-memory versions.
+def install_stubs(delay: float = 0.0, mode: str = "canned") -> str:
+    """Swap the LLM and the search tool for offline versions.
 
-    ``delay`` (seconds) is added to every canned call so a recorded demo shows
-    the per-agent progress; leave it at 0 for normal runs.
+    ``mode`` is ``"canned"`` (recorded NimbusAI payloads — the same output for any deck)
+    or ``"deck_aware"`` (the Extractor and Supervisor read the deck they are given).
+    ``delay`` (seconds) is added to every call so a recorded demo shows the per-agent
+    progress; leave it at 0 for normal runs. Returns the mode installed, so a caller can
+    report which one is in effect.
     """
 
-    metrics, memo, red_flags = _canned_payload()
-    graph_module.get_llm = lambda *_, **__: CannedLLM(metrics, memo, red_flags, delay)  # type: ignore[assignment]
+    if mode not in OFFLINE_MODES:
+        raise ValueError(f"unknown offline mode {mode!r}; expected one of {OFFLINE_MODES}")
+
+    _, memo, red_flags = _canned_payload()
+    if mode == "deck_aware":
+        llm: CannedLLM | DeckAwareLLM = DeckAwareLLM(red_flags, delay)
+    else:
+        metrics, _, flags = _canned_payload()
+        llm = CannedLLM(metrics, memo, flags, delay)
+
+    # The memo must not claim a model ran when none did: the artefacts are stamped with
+    # whatever `model_label()` returns, so point it at the truth for offline runs.
+    graph_module.model_label = lambda *_, **__: f"offline rules, {mode} (no model)"  # type: ignore[assignment]
+
+    graph_module.get_llm = lambda *_, **__: llm  # type: ignore[assignment]
     graph_module.get_search_tool = lambda *_, **__: CannedSearchTool(  # type: ignore[assignment]
         _market_blocks(), delay
     )
+    return mode
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -144,6 +212,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--md")
     parser.add_argument("--json", dest="json_out")
     parser.add_argument(
+        "--offline-mode",
+        choices=OFFLINE_MODES,
+        default="canned",
+        help="canned: recorded payloads (same output for any deck); "
+        "deck_aware: the agents read the deck they are given",
+    )
+    parser.add_argument(
         "--delay",
         type=float,
         default=0.0,
@@ -151,12 +226,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    install_stubs(delay=args.delay)
+    mode = install_stubs(delay=args.delay, mode=args.offline_mode)
 
-    print("DueDil.Agent — OFFLINE DEMO (canned LLM + canned search, no API keys)\n")
+    print(f"DueDil.Agent — OFFLINE DEMO ({mode} LLM + canned search, no API keys)\n")
     print(f"  deck  : {args.deck}")
     print(f"  url   : {args.url}")
-    print("  model : offline-demo\n")
+    print(f"  model : offline-demo ({mode})\n")
 
     print("[1/2] Parsing PDF -> Markdown ...")
     deck_text = parse_pdf_to_markdown(args.deck)
@@ -191,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nRed flags  : {len(state.get('red_flags') or [])}")
     print(f"Critic loops: {state.get('critic_loops_count', 0)}")
     print(f"Financials : {benchmarks.get('verdict', 'n/a')}")
+    print(f"Company    : {(state.get('extracted_metrics') or {}).get('company_name', '?')}")
     print(f"\nPDF memo   : {out_path}")
     return 0
 

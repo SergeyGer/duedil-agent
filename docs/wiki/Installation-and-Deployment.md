@@ -38,6 +38,11 @@ produces a memo — so anyone can click it and it costs nothing. Apps without tr
 hibernate and wake on the next visit; the resource limits (~2 cores, 2.7 GB) leave comfortable
 headroom.
 
+Because no keys are configured, the app runs its **rule-based offline agents** rather than calling
+a model it cannot reach — see *What the app does when there are no API keys* in
+[Interfaces](Interfaces) — so each example deck still gets its own analysis, and every artefact
+says that no model ran.
+
 A visitor rarely has a pitch deck to hand, so the sidebar's **📂 Browse examples/** button opens a
 dialog listing the five bundled decks (`examples/*.pdf`): the demo runs in three clicks, and
 picking a deck fills in the matching website URL. Those decks are reconstructions from public

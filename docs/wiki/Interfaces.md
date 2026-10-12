@@ -21,6 +21,27 @@ streamlit run app/ui.py           # or: make run
 | Languages | English (default), German, French, Russian (`app/i18n.py`). |
 | Expander | The raw `progress_log`, for when a step needs explaining. |
 
+### What the app does when there are no API keys
+
+The hosted demo runs without secrets, so the real LLM nodes cannot work. Two things follow,
+and both are deliberate:
+
+1. The app switches to **rule-based offline agents** (`app/offline_agents.py`): the Extractor
+   reads the deck it was given — titles, amounts, headcounts — and the Supervisor assembles the
+   memo from those readings, marking anything the deck does not state as `[NOT_FOUND]`. It is a
+   mechanical reading, not a model's judgement, and the UI says so in a warning above the
+   results while the memo and the PDF repeat it in their byline
+   (`offline rules, deck_aware (no model)`).
+2. A different deck therefore produces a **different** analysis. Before this, every input fell
+   through to the same static fallback memo — `Investment Memo — Unknown Startup` for all five
+   examples — which made the picker meaningless and looked like a bug.
+
+`DUE_DIL_OFFLINE_MODE` selects the mode explicitly (`deck_aware` for the above, `canned` for the
+recorded payloads the committed example memo was produced from); without it the app decides from
+the environment, and a deployment that has its keys runs the real pipeline. The legacy
+`DUEDIL_MODE` switch still works and defaults to `canned`, so existing recordings stay
+reproducible.
+
 ### Why the bundled decks are behind a button, not a list
 
 The sidebar holds one uploader and one button that opens a dialog listing `examples/`. The list is

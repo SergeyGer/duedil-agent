@@ -59,6 +59,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "example_selected": "Selected example: {name}",
         "clear_example": "Clear selection",
         "err_no_examples": "The examples folder is not part of this deployment.",
+        "offline_notice": "No API keys in this deployment, so no language model ran: the figures were read from the deck by rule and the market notes are a canned snapshot. The analysis below is therefore mechanical — the same deck with keys configured gets a model's judgement.",
     },
     "de": {
         "language_label": "🌐 Language / Sprache / Langue / Язык",
@@ -101,6 +102,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "example_selected": "Gewähltes Beispiel: {name}",
         "clear_example": "Auswahl aufheben",
         "err_no_examples": "Der Ordner examples ist in dieser Bereitstellung nicht enthalten.",
+        "offline_notice": "In dieser Bereitstellung fehlen die API-Schlüssel, es lief kein Sprachmodell: Die Zahlen wurden regelbasiert aus dem Deck gelesen, die Marktnotizen sind ein fester Schnappschuss. Die Analyse ist daher mechanisch.",
     },
     "fr": {
         "language_label": "🌐 Language / Sprache / Langue / Язык",
@@ -143,6 +145,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "example_selected": "Exemple sélectionné : {name}",
         "clear_example": "Effacer la sélection",
         "err_no_examples": "Le dossier examples n'est pas inclus dans ce déploiement.",
+        "offline_notice": "Aucune clé API dans ce déploiement : aucun modèle de langue n'a tourné. Les chiffres ont été lus dans le deck par règles et les notes de marché sont un instantané figé. L'analyse est donc mécanique.",
     },
     "ru": {
         "language_label": "🌐 Language / Sprache / Langue / Язык",
@@ -185,6 +188,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "example_selected": "Выбран пример: {name}",
         "clear_example": "Сбросить выбор",
         "err_no_examples": "Папка examples недоступна в этом развёртывании.",
+        "offline_notice": "В этом развёртывании нет ключей API, поэтому языковая модель не запускалась: цифры прочитаны из дека по правилам, а рыночные данные — фиксированный снимок. Анализ ниже механический.",
     },
 }
 
