@@ -40,3 +40,4 @@ Thumbs.db
 
 # Local verification scratch space (browser checks, screenshots)
 .appcheck/
+*.code-workspace
