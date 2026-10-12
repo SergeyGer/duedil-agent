@@ -204,12 +204,16 @@ COMPANIES: list[dict] = [
             ("Market", "[NOT_FOUND] — no audited TAM was published with the round."),
         ],
         "sources": [
-            "Businesswire — 'Cursor Secures $2.3 Billion Series D Financing at $29.3 Billion "
-            "Valuation' (Nov 2025)",
+            (
+                "Businesswire — 'Cursor Secures $2.3 Billion Series D Financing at $29.3 "
+                "Billion Valuation' (Nov 2025)"
+            ),
             "SaaStr — 'Cursor Hit $1B ARR' analysis of reported growth",
             "CNBC / TechCrunch coverage of the 2025 round",
-            "DEV Community analysis - 'How Cursor Became the Fastest B2B Company to $1B ARR "
-            "with Just 300 Employees'",
+            (
+                "DEV Community analysis — 'How Cursor Became the Fastest B2B Company to $1B "
+                "ARR with Just 300 Employees'"
+            ),
         ],
     },
     {
@@ -258,8 +262,10 @@ COMPANIES: list[dict] = [
             ("Market", "[NOT_FOUND] — no audited TAM was published with the round."),
         ],
         "sources": [
-            "TechCrunch — 'Lovable says it added $100M in revenue last month alone, with just "
-            "146 employees' (Mar 2026)",
+            (
+                "TechCrunch — 'Lovable says it added $100M in revenue last month alone, with "
+                "just 146 employees' (Mar 2026)"
+            ),
             "Tech Funding News — '$400M at $13.3B valuation' coverage",
             "Business Insider — valuation coverage (2026)",
         ],
@@ -315,10 +321,16 @@ COMPANIES: list[dict] = [
             ("Market", "[NOT_FOUND] — no audited TAM was published."),
         ],
         "sources": [
-            "Yahoo Finance — 'Cognition AI defies turbulence with a $400M raise at $10.2B "
-            "valuation'",
+            (
+                "Yahoo Finance — 'Cognition AI defies turbulence with a $400M raise at $10.2B "
+                "valuation'"
+            ),
             "Tech Funding News — coverage of the Windsurf acquisition and valuation",
             "Cognition company blog — funding and growth post",
+            (
+                "Interview with Scott Wu (Z Talk) — 'our engineering team is 15 people, each "
+                "with 5 Devins'"
+            ),
         ],
     },
 ]

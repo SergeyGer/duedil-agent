@@ -21,7 +21,9 @@ line in the Cloud log names the import that killed it. When every import succeed
 probe renders the real UI, so it can be used as a drop-in entry point.
 
 This is a diagnostic, not part of the application: nothing imports it, and the test
-suite ignores it.
+suite ignores it. Failures are caught as ``Exception``; an interrupt or a hard exit
+(``KeyboardInterrupt`` / ``SystemExit``) is deliberately allowed through, since the
+probe's job is to report, not to swallow.
 """
 
 from __future__ import annotations
@@ -65,7 +67,7 @@ for label, target in STEPS:
     try:
         import_module(target)
         results.append((label, "ok", ""))
-    except BaseException:  # noqa: BLE001 - a probe must survive anything, incl. SystemExit
+    except Exception:  # noqa: BLE001 - one broken import must not hide the others
         results.append((label, "FAILED", traceback.format_exc()))
 
 for label, status, detail in results:
@@ -84,7 +86,7 @@ if all(status == "ok" for _, status, _ in results):
 
         main()
         st.success("the real UI rendered")
-    except BaseException:  # noqa: BLE001 - report instead of dying silently
+    except Exception:  # noqa: BLE001 - report the failure instead of dying silently
         st.error("the real UI raised:")
         st.code(traceback.format_exc())
 else:
