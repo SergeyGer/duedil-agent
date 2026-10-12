@@ -65,6 +65,18 @@ def _upload(page: Page, deck: Path) -> None:
     _settle(page, 2500)
 
 
+def _pick_example(page: Page, label: str) -> None:
+    """Choose one of the bundled example decks from the sidebar picker.
+
+    Streamlit renders `st.radio` as a `radiogroup` whose options carry no ARIA role, so
+    the option is located by its text inside the group.
+    """
+
+    group = page.locator(f'{SIDEBAR} [role="radiogroup"]').first
+    group.get_by_text(label, exact=True).first.click()
+    _settle(page, 3000)
+
+
 def _fill_url(page: Page, url: str) -> None:
     if not url:
         return
@@ -107,6 +119,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default=os.getenv("CAPTURE_OUT", "docs/media"))
     parser.add_argument("--video-out", default=os.getenv("CAPTURE_VIDEO_OUT", ""))
     parser.add_argument("--shots", default=os.getenv("CAPTURE_SHOTS", "1"))
+    # Run one of the bundled example decks instead of uploading a file. The default is
+    # the synthetic NimbusAI deck, which is the one the offline demo is pinned to.
+    parser.add_argument("--example", default=os.getenv("CAPTURE_EXAMPLE", ""))
     parser.add_argument("--width", type=int, default=1440)
     # Tall viewport: the whole result page (progress, metrics, red flags, memo and
     # the download button) fits in one frame without scrolling.
@@ -140,8 +155,11 @@ def main(argv: list[str] | None = None) -> int:
         if "idle" in shots:
             _shot(page, out, "ui-idle-en")
 
-        _upload(page, deck)
-        _fill_url(page, args.url)
+        if args.example:
+            _pick_example(page, args.example)
+        else:
+            _upload(page, deck)
+            _fill_url(page, args.url)
         _run(page, STRINGS, shots, out)
 
         if "results" in shots:

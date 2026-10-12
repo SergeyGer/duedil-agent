@@ -24,7 +24,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from app import __version__
-from app.config import DEFAULT_MODEL
+from app.config import model_label
 from app.graph import build_graph
 from app.parser import ParserError, parse_pdf_to_markdown
 from app.report import markdown_to_pdf
@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     log("DueDil.Agent")
     log(f"  deck  : {deck_path}")
     log(f"  url   : {args.url or '(not provided)'}")
-    log(f"  model : {os.getenv('DUE_DIL_MODEL', DEFAULT_MODEL)}")
+    log(f"  model : {model_label()}")
     log("")
 
     log("[1/2] Parsing PDF -> Markdown ...")
@@ -132,14 +132,16 @@ def main(argv: list[str] | None = None) -> int:
         flags = state.get("red_flags") or []
         log("")
         log(f"Red flags  : {len(flags)}")
+        log(f"Critic loops: {state.get('critic_loops_count', 0)}")
         if benchmarks.get("verdict"):
             log(f"Financials : {benchmarks['verdict']}")
+        log(f"Model used : {state.get('used_model') or model_label()}")
 
     # --- write outputs -----------------------------------------------------
     company = (state.get("extracted_metrics") or {}).get("company_name") or "startup"
     out_path = Path(args.out) if args.out else Path("data") / f"{_slugify(company)}_memo.pdf"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    markdown_to_pdf(memo, str(out_path))
+    markdown_to_pdf(memo, str(out_path), model=state.get("used_model") or model_label())
 
     # `newline="\n"` keeps the generated artefacts LF-only on Windows, matching
     # `.gitattributes` (`eol=lf`) and the pre-commit `mixed-line-ending` hook.

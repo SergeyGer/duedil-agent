@@ -5,6 +5,9 @@ Run with::
     streamlit run app/ui.py
 
 The interface ships in English (default), German, French and Russian.
+
+The page is deliberately thin: everything that turns state into something readable
+lives in :mod:`app.display`, so it can be unit-tested without a browser.
 """
 
 from __future__ import annotations
@@ -12,18 +15,23 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Make sure the project root is importable when launched via `streamlit run`.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Make sure the project root is importable when Streamlit runs this file as a script.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st  # noqa: E402
 
+from app.display import (  # noqa: E402
+    benchmark_rows,
+    metric_rows,
+    state_summary,
+    verdict_of,
+)
 from app.graph import build_graph  # noqa: E402
 from app.i18n import DEFAULT_LANGUAGE, LANGUAGES, translate  # noqa: E402
 from app.parser import ParserError, parse_pdf_to_markdown  # noqa: E402
 from app.report import markdown_to_pdf_bytes  # noqa: E402
 from app.state import initial_state  # noqa: E402
 
-# Maps a graph node to its i18n key.
 NODE_LABEL_KEYS = {
     "agent_extractor": "step_extractor",
     "agent_scraper": "step_scraper",
@@ -32,34 +40,67 @@ NODE_LABEL_KEYS = {
     "agent_supervisor": "step_supervisor",
 }
 
+# Bundled decks from examples/ — the ones documented in examples/README.md. They are
+# reconstructions built from public reporting, which is why the picker says so.
+EXAMPLE_DECKS: list[tuple[str, str]] = [
+    ("airbnb_deck.pdf", "Airbnb (2011)"),
+    ("uber_deck.pdf", "Uber (2011)"),
+    ("cursor_deck.pdf", "Cursor"),
+    ("lovable_deck.pdf", "Lovable"),
+    ("cognition_deck.pdf", "Cognition AI"),
+]
 
-def _merge_update(state: dict, node: str, payload: dict | None) -> None:
-    """Merge a node's partial update into the accumulated state."""
-
-    payload = payload or {}
-    for key, value in payload.items():
-        if key == "progress_log":
-            state.setdefault("progress_log", [])
-            state["progress_log"].extend(value or [])
-        else:
-            state[key] = value
+# The website field is prefilled with the matching public URL when an example is picked.
+EXAMPLE_URLS = {
+    "airbnb_deck.pdf": "https://www.airbnb.com",
+    "uber_deck.pdf": "https://www.uber.com",
+    "cursor_deck.pdf": "https://cursor.com",
+    "lovable_deck.pdf": "https://lovable.dev",
+    "cognition_deck.pdf": "https://cognition.ai",
+}
 
 
 def _language_selector() -> str:
-    """Render the language picker in the sidebar and return the chosen code."""
-
-    codes = list(LANGUAGES)
+    options = list(LANGUAGES)
     current = st.session_state.get("lang", DEFAULT_LANGUAGE)
-    if current not in codes:
-        current = DEFAULT_LANGUAGE
     choice = st.selectbox(
-        translate(DEFAULT_LANGUAGE, "language_label"),
-        options=codes,
-        index=codes.index(current),
+        translate(current, "language_label"),
+        options,
+        index=options.index(current),
         format_func=lambda code: LANGUAGES[code],
     )
     st.session_state["lang"] = choice
     return choice
+
+
+def _literal(text: str) -> str:
+    """Escape dollar signs so Streamlit renders money instead of LaTeX."""
+
+    return text.replace("$", "\\$")
+
+
+def _examples_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "examples"
+
+
+def _deck_from_example(name: str) -> bytes | None:
+    """Read a bundled deck from disk, or explain why it is unavailable."""
+
+    path = _examples_dir() / name
+    try:
+        return path.read_bytes()
+    except OSError:
+        return None
+
+
+def _merge_update(state: dict, node: str, payload: dict | None) -> None:
+    """Apply a node's partial update to the state under construction."""
+
+    for key, value in (payload or {}).items():
+        if key == "progress_log":
+            state.setdefault("progress_log", []).extend(value or [])
+        else:
+            state[key] = value
 
 
 def main() -> None:
@@ -79,7 +120,22 @@ def main() -> None:
     with st.sidebar:
         st.header(t("sidebar_header"))
         uploaded = st.file_uploader(t("uploader_label"), type=["pdf"])
-        website_url = st.text_input(t("url_label"), placeholder=t("url_placeholder"))
+
+        st.caption(t("examples_label"))
+        example_labels = [t("examples_none")] + [label for _, label in EXAMPLE_DECKS]
+        chosen_label = st.radio(
+            t("examples_label"),
+            example_labels,
+            index=0,
+            label_visibility="collapsed",
+        )
+        st.caption(t("examples_hint"))
+
+        chosen_file = next((name for name, label in EXAMPLE_DECKS if label == chosen_label), None)
+        default_url = EXAMPLE_URLS.get(chosen_file or "", "")
+        website_url = st.text_input(
+            t("url_label"), value=default_url, placeholder=t("url_placeholder")
+        )
         run = st.button(t("run_button"), type="primary", use_container_width=True)
         st.divider()
         st.caption(t("keys_caption"))
@@ -93,14 +149,23 @@ def main() -> None:
         st.info(t("idle_hint"))
         return
 
-    if not uploaded:
-        st.error(t("err_no_pdf"))
+    deck_bytes: bytes | None = None
+    if uploaded is not None:
+        deck_bytes = uploaded.read()
+    elif chosen_file:
+        deck_bytes = _deck_from_example(chosen_file)
+        if deck_bytes is None:
+            st.error(t("err_parse", error=f"{chosen_file} is not available in this deployment"))
+            return
+        st.info(f"📄 {chosen_file}")
+
+    if not deck_bytes:
+        st.error(t("err_no_deck"))
         return
 
-    pdf_bytes = uploaded.read()
     with st.spinner(t("spinner_parsing")):
         try:
-            deck_text = parse_pdf_to_markdown(pdf_bytes)
+            deck_text = parse_pdf_to_markdown(deck_bytes)
         except ParserError as exc:
             st.error(t("err_parse", error=exc))
             return
@@ -126,33 +191,56 @@ def main() -> None:
     benchmarks = state.get("financial_benchmarks") or {}
     flags = state.get("red_flags") or []
 
+    # --- what ran, and what came out of it ---------------------------------
+    st.subheader(t("summary_header"))
+    st.caption(t("about_model", model=state.get("used_model") or "unknown"))
+    summary = state_summary(state)
+    summary_cols = st.columns(len(summary))
+    for column, row in zip(summary_cols, summary, strict=True):
+        column.metric(row["metric"], row["value"])
+
+    # --- readable tables instead of raw JSON -------------------------------
     left, right = st.columns(2)
     with left:
         st.subheader(t("metrics_header"))
-        if metrics:
-            st.json(metrics)
+        rows = metric_rows(metrics)
+        if rows:
+            st.dataframe(rows, hide_index=True, use_container_width=True)
         else:
             st.write(t("no_metrics"))
     with right:
         st.subheader(t("benchmarks_header"))
+        rows = benchmark_rows(benchmarks)
         if benchmarks:
-            st.json(benchmarks)
+            st.dataframe(rows, hide_index=True, use_container_width=True)
         else:
             st.write(t("no_benchmarks"))
+
+    # --- the conclusion gets its own, unmistakable block -------------------
+    marker, verdict = verdict_of(benchmarks)
+    st.subheader(t("verdict_header"))
+    callout = getattr(
+        st,
+        {"above": "success", "below": "warning"}.get(str(benchmarks.get("status") or ""), "info"),
+    )
+    # `$1,200,000` inside a Streamlit markdown block is parsed as LaTeX unless the dollars
+    # are escaped, which renders money as "1, 200, 000". The verdict, the flags and the
+    # memo are prose about money, not formulas.
+    callout(_literal(f"{marker} {verdict}"))
 
     if flags:
         st.subheader(f"🚩 {t('redflags_header')}")
         for flag in flags:
-            st.warning(flag)
+            st.warning(_literal(flag))
     else:
         st.success(t("no_redflags"))
 
     st.subheader(t("memo_header"))
-    st.markdown(memo)
+    st.markdown(_literal(memo))
 
     st.download_button(
         t("download_pdf"),
-        data=markdown_to_pdf_bytes(memo),
+        data=markdown_to_pdf_bytes(memo, model=state.get("used_model") or ""),
         file_name="duediligence_memo.pdf",
         mime="application/pdf",
         type="primary",

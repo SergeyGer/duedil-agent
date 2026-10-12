@@ -54,6 +54,10 @@ class VentureState(TypedDict, total=False):
     final_memo: str
 
     # --- Bookkeeping / observability ---------------------------------------
+    # Which model actually produced the analysis, e.g. "gpt-4o (OpenAI)". Recorded by
+    # the extractor, because an LLM result without the model that produced it cannot be
+    # judged or reproduced.
+    used_model: str
     # ``progress_log`` uses the ``add`` reducer so every node can append its own
     # status lines without clobbering the others' entries.
     progress_log: Annotated[list[str], add]
@@ -73,6 +77,7 @@ def initial_state(pitch_deck_raw: str, website_url: str = "") -> VentureState:
         critic_loops_count=0,
         critic_feedback="",
         final_memo="",
+        used_model="",
         progress_log=["[init] run started"],
         error="",
     )

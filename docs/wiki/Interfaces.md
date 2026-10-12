@@ -11,12 +11,20 @@ streamlit run app/ui.py           # or: make run
 
 | Element | Behaviour |
 |---|---|
-| Sidebar | Language selector, PDF uploader, website URL, **Run due diligence** button. |
+| Sidebar | Language selector, PDF uploader, **or a picker for the five bundled example decks** (which also prefills the matching website), website URL, **Run due diligence** button. |
 | Progress | One chip per graph node: pending → success, updated live from the graph's `updates` stream. |
-| Results | Extracted metrics and financial benchmarks as JSON, one warning panel per Red Flag, the full memo rendered as Markdown. |
-| Export | **Download PDF** button — rendered in memory via `markdown_to_pdf_bytes()`, nothing written to disk. |
+| Run summary | A headline strip: company, Red Flags found, critic passes used (of 2), and **which model produced the analysis**. |
+| Results | Extracted metrics and the financial audit as **readable tables** — money grouped, ratios as `0.86× the benchmark`, missing figures labelled `— (not in the deck)` — instead of raw JSON. |
+| Verdict | The conclusion of the financial audit gets its own highlighted callout: ✅ above the benchmark, ⚠️ below, ❔ not computable. It is deliberately not a table row, so it cannot be read as another input figure. |
+| Red Flags | One warning panel per flag, below the verdict. |
+| Export | **Download PDF** button — rendered in memory via `markdown_to_pdf_bytes()`, nothing written to disk; the footer names the model that wrote the memo. |
 | Languages | English (default), German, French, Russian (`app/i18n.py`). |
 | Expander | The raw `progress_log`, for when a step needs explaining. |
+
+The page is deliberately thin: everything that turns state into something readable lives in
+`app/display.py`, which is pure and unit-tested without a browser (`tests/test_display.py`).
+That is where the formatting rules live — how money is grouped, how a `[NOT_FOUND]` figure is
+labelled, which metric comes first, and why the verdict is not just another row.
 
 Session behaviour worth knowing: switching the language triggers a Streamlit rerun and resets
 the run, so a language change always precedes a fresh run — this is why the documentation
