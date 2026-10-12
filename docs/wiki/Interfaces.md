@@ -11,7 +11,7 @@ streamlit run app/ui.py           # or: make run
 
 | Element | Behaviour |
 |---|---|
-| Sidebar | Language selector, PDF uploader, **or a picker for the five bundled example decks** (which also prefills the matching website), website URL, **Run due diligence** button. |
+| Sidebar | Language selector, PDF uploader, a single **📂 Browse examples/** button, website URL, **Run due diligence** button. |
 | Progress | One chip per graph node: pending → success, updated live from the graph's `updates` stream. |
 | Run summary | A headline strip: company, Red Flags found, critic passes used (of 2), and **which model produced the analysis**. |
 | Results | Extracted metrics and the financial audit as **readable tables** — money grouped, ratios as `0.86× the benchmark`, missing figures labelled `— (not in the deck)` — instead of raw JSON. |
@@ -20,6 +20,20 @@ streamlit run app/ui.py           # or: make run
 | Export | **Download PDF** button — rendered in memory via `markdown_to_pdf_bytes()`, nothing written to disk; the footer names the model that wrote the memo. |
 | Languages | English (default), German, French, Russian (`app/i18n.py`). |
 | Expander | The raw `progress_log`, for when a step needs explaining. |
+
+### Why the bundled decks are behind a button, not a list
+
+The sidebar holds one uploader and one button that opens a dialog listing `examples/`. The list is
+not always on screen because it is not the normal path — most visitors come to analyse their own
+deck.
+
+It cannot be folded into the uploader itself: **`st.file_uploader`'s "Browse files" dialog is the
+browser's own file picker and can only see the visitor's machine**, never the server's filesystem.
+Streamlit 1.65 has no parameter for a server-side folder, so an app that wants to offer files it
+ships must render its own listing. That is what the dialog is.
+
+Picking a deck prefills the matching website URL, shows `Selected example: <file>` with a **Clear
+selection** button, and an explicit upload always wins over a remembered example.
 
 The page is deliberately thin: everything that turns state into something readable lives in
 `app/display.py`, which is pure and unit-tested without a browser (`tests/test_display.py`).

@@ -38,11 +38,11 @@ produces a memo — so anyone can click it and it costs nothing. Apps without tr
 hibernate and wake on the next visit; the resource limits (~2 cores, 2.7 GB) leave comfortable
 headroom.
 
-A visitor rarely has a pitch deck to hand, so the sidebar offers the five bundled example decks
-(`examples/*.pdf`): the demo runs in two clicks, and picking a deck fills in the matching website
-URL. Those decks are reconstructions from public reporting — the sidebar says so and each deck
-prints its sources on its last page, which matters when the demo is the first thing a stranger
-sees.
+A visitor rarely has a pitch deck to hand, so the sidebar's **📂 Browse examples/** button opens a
+dialog listing the five bundled decks (`examples/*.pdf`): the demo runs in three clicks, and
+picking a deck fills in the matching website URL. Those decks are reconstructions from public
+reporting — the dialog says so and each deck prints its sources on its last page, which matters
+when the demo is the first thing a stranger sees.
 
 
 ## Prerequisites
