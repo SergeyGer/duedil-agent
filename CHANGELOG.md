@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Bundled example decks in the demo**: the Streamlit sidebar offers the five decks from
-  `examples/` (`airbnb`, `uber`, `cursor`, `lovable`, `cognition`), so the hosted demo runs in two
-  clicks and prefills the matching website URL.
+- **Bundled example decks in the demo**: the sidebar's **📂 Browse examples/** button opens a
+  dialog listing the five decks from `examples/` (`airbnb`, `uber`, `cursor`, `lovable`,
+  `cognition`), so the hosted demo runs without the visitor having a PDF to hand. Picking a deck
+  prefills the matching website URL; an upload always wins over a remembered example. The listing
+  is rendered by the app because `st.file_uploader`'s own dialog can only see the visitor's
+  filesystem, never the server's.
 - **Model attribution everywhere**: the run summary, the CLI (`Model used : gpt-4o (OpenAI)`) and
   the exported PDF footer all state which model produced the analysis. The extractor records it in
   `VentureState.used_model`.

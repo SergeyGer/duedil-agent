@@ -27,7 +27,8 @@ in a browser, no installation and no API keys.
 
 A real run — five agents, two passes of critical re-verification, and a memo that ends in
 **REJECT** because the deck does not survive scrutiny. No upload needed: the sidebar offers
-**five bundled example decks**, and the run summary states which model produced the analysis:
+**five bundled example decks** behind the sidebar's *Browse examples* button, and the run summary
+states which model produced the analysis:
 
 <video src="docs/media/demo-offline.mp4" controls width="820"></video>
 

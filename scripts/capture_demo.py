@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -66,14 +67,15 @@ def _upload(page: Page, deck: Path) -> None:
 
 
 def _pick_example(page: Page, label: str) -> None:
-    """Choose one of the bundled example decks from the sidebar picker.
+    """Choose one of the bundled decks through the "Browse examples/" dialog.
 
-    Streamlit renders `st.radio` as a `radiogroup` whose options carry no ARIA role, so
-    the option is located by its text inside the group.
+    The sidebar keeps a single uploader; the bundled decks are behind one button that
+    opens a dialog listing `examples/`. The option is matched by its label text.
     """
 
-    group = page.locator(f'{SIDEBAR} [role="radiogroup"]').first
-    group.get_by_text(label, exact=True).first.click()
+    page.get_by_role("button", name=re.compile("Browse examples", re.I)).first.click()
+    _settle(page, 2000)
+    page.get_by_role("button", name=re.compile(re.escape(label), re.I)).first.click()
     _settle(page, 3000)
 
 

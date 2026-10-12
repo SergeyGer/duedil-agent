@@ -103,6 +103,37 @@ def _merge_update(state: dict, node: str, payload: dict | None) -> None:
             state[key] = value
 
 
+@st.dialog("Pick a deck from examples/")
+def _browse_examples_dialog() -> None:
+    """Show the bundled decks as a file listing.
+
+    The sidebar keeps a single uploader; this dialog is what the second button opens,
+    so choosing a bundled deck stays a deliberate two-click action instead of a list
+    that is always on screen. Browser security would not let the uploader's own "Browse
+    files" button reach the server's filesystem, so the listing is rendered by the app.
+    """
+
+    st.caption(
+        "Reconstructed from public reporting — each deck prints its sources on its last "
+        "page. Or cancel and upload your own PDF."
+    )
+    for name, label in EXAMPLE_DECKS:
+        exists = (_examples_dir() / name).is_file()
+        if st.button(
+            f"📄 {label} — {name}",
+            key=f"example_{name}",
+            use_container_width=True,
+            disabled=not exists,
+            help=None if exists else f"{name} is not available in this deployment",
+        ):
+            st.session_state["chosen_example"] = name
+            st.rerun()
+
+
+def _chosen_example_name() -> str | None:
+    return st.session_state.get("chosen_example")
+
+
 def main() -> None:
     st.set_page_config(page_title="DueDil.Agent", page_icon="🔍", layout="wide")
     if "lang" not in st.session_state:
@@ -121,22 +152,33 @@ def main() -> None:
         st.header(t("sidebar_header"))
         uploaded = st.file_uploader(t("uploader_label"), type=["pdf"])
 
-        st.caption(t("examples_label"))
-        example_labels = [t("examples_none")] + [label for _, label in EXAMPLE_DECKS]
-        chosen_label = st.radio(
-            t("examples_label"),
-            example_labels,
-            index=0,
-            label_visibility="collapsed",
-        )
-        st.caption(t("examples_hint"))
+        can_browse = any((_examples_dir() / name).is_file() for name, _ in EXAMPLE_DECKS)
+        if st.button(
+            t("browse_examples"),
+            key="browse_examples",
+            use_container_width=True,
+            disabled=not can_browse,
+            help=None if can_browse else t("err_no_examples"),
+        ):
+            _browse_examples_dialog()
 
-        chosen_file = next((name for name, label in EXAMPLE_DECKS if label == chosen_label), None)
-        default_url = EXAMPLE_URLS.get(chosen_file or "", "")
+        chosen_file = _chosen_example_name()
+        # Rendered through a placeholder so the selection row only appears when there is
+        # something to show, without the widgets below it shifting position.
+        selection_slot = st.empty()
+        if chosen_file and (_examples_dir() / chosen_file).is_file():
+            with selection_slot.container():
+                st.caption(t("example_selected", name=chosen_file))
+                if st.button(t("clear_example"), key="clear_example", use_container_width=True):
+                    st.session_state["chosen_example"] = None
+                    st.rerun()
+
         website_url = st.text_input(
-            t("url_label"), value=default_url, placeholder=t("url_placeholder")
+            t("url_label"),
+            value=EXAMPLE_URLS.get(chosen_file or "", ""),
+            placeholder=t("url_placeholder"),
         )
-        run = st.button(t("run_button"), type="primary", use_container_width=True)
+        run = st.button(t("run_button"), key="run_button", type="primary", use_container_width=True)
         st.divider()
         st.caption(t("keys_caption"))
 
@@ -151,6 +193,9 @@ def main() -> None:
 
     deck_bytes: bytes | None = None
     if uploaded is not None:
+        # An explicit upload wins, and the remembered example is dropped so the next run
+        # cannot silently fall back to it.
+        st.session_state["chosen_example"] = None
         deck_bytes = uploaded.read()
     elif chosen_file:
         deck_bytes = _deck_from_example(chosen_file)
