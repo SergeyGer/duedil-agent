@@ -56,8 +56,10 @@ def _calls() -> list[tuple[Path, int, str, set[str]]]:
                 continue
             if any(keyword.arg is None for keyword in node.keywords):
                 continue  # **kwargs unpacking cannot be checked statically
-            name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(
-                node.func, "id", ""
+            name = (
+                node.func.attr
+                if isinstance(node.func, ast.Attribute)
+                else getattr(node.func, "id", "")
             )
             if not name:
                 continue
