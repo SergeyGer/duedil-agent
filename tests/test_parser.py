@@ -87,7 +87,12 @@ def test_example_decks_exist_and_parse():
         assert path.exists(), f"{name} is missing from examples/"
         text = parse_pdf_to_markdown(path)
         assert len(text) > 1200, f"{name} extracted only {len(text)} characters"
-        assert "#" in text, f"{name} lost its heading structure"
+        # Deliberately not asserting on Markdown syntax: with LlamaParse configured the
+        # parser returns `#` headings, while the pypdf fallback (what CI uses, since LLAMA
+        # keys are absent there) returns plain text. Both are correct, so the check is that
+        # the deck's sections survived the round trip.
+        for section in ("Problem", "Solution", "Traction", "Team", "Business model", "Sources"):
+            assert section in text, f"{name} lost its '{section}' section"
 
 
 def test_example_decks_carry_their_own_provenance():
