@@ -28,9 +28,9 @@ reconstruction.
 |------|---------|---------|-------------------|
 | [`airbnb_deck.pdf`](airbnb_deck.pdf) | Airbnb | 2008 | The canonical marketplace story: no inventory, commission only, trust as the product. |
 | [`uber_deck.pdf`](uber_deck.pdf) | Uber | 2009 | City-by-city expansion where each launch repeats the same playbook. |
-| [`cursor_deck.pdf`](cursor_deck.pdf) | Cursor (Anysphere) | 2022 | Reported as the fastest B2B company to $1B ARR; tests the financial benchmark at the top end. |
+| [`cursor_deck.pdf`](cursor_deck.pdf) | Cursor (Anysphere) | 2022 | Reported as the fastest B2B company to $1B ARR; ~300 employees against a $500M+ run rate tests the financial benchmark at the top end. |
 | [`lovable_deck.pdf`](lovable_deck.pdf) | Lovable | 2023 | ~$400M ARR with ~146 employees — the extreme end of revenue per headcount. |
-| [`cognition_deck.pdf`](cognition_deck.pdf) | Cognition AI | 2023 | Sells autonomous execution, and publishes no ARR at all. |
+| [`cognition_deck.pdf`](cognition_deck.pdf) | Cognition AI | 2023 | Sells autonomous execution with ~15 engineers, and publishes no ARR at all — the densest missing-data case. |
 
 Two older decks sit in the same folder and are unrelated to this set: `sample_deck.pdf` (the
 synthetic NimbusAI deck the tests and the offline demo use) and `sample_memo.pdf` (its generated
@@ -43,9 +43,13 @@ The decks are written so the pipeline has something real to disagree with:
 | Deck | Expected behaviour |
 |------|--------------------|
 | Airbnb, Uber | Headcount (`about 40 people`, `about 30 employees`) is parseable, so the team-size rule has something to work with against external sources. |
-| Cursor, Cognition | ARR and headcount are partly `[NOT_FOUND]`, so the critic must report the gap instead of inventing a number. |
-| Lovable | ~$400M ARR against ~146 employees is far above the $100k/employee benchmark — a healthy verdict, in contrast to the NimbusAI sample, which lands below it. |
-| Cognition | Three deliberate `[NOT_FOUND]` markers, the densest missing-data case of the five. |
+| Cursor | `About 300 employees` against a reported $500M+ run rate — roughly $1.7M per head, far above the $100k benchmark. Tests the healthy end of the financial audit. |
+| Lovable | ~$400M ARR with ~146 employees — the same healthy signal at an even more extreme ratio. |
+| Cognition | `About 15 engineers` is parseable, but no public ARR exists: the financial audit must say it cannot compute efficiency, and the critic must report the gap rather than invent a number. |
+| Cognition, Cursor | Deliberate `[NOT_FOUND]` markers (TAM, and ARR for Cognition) so the missing-data path runs. |
+
+The contrast is deliberate: the synthetic `sample_deck.pdf` lands **below** the benchmark and
+produces a weak verdict, while Cursor and Lovable land far **above** it.
 
 ## Running the pipeline on one
 

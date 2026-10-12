@@ -147,9 +147,13 @@ def compute_financials(
     return result
 
 
+# Headcount mentioned in free text. `engineers` and `researchers` are included because
+# technical decks and interviews routinely describe a team that way ("about 15
+# engineers"), and they are as much a headcount claim as "employees".
 _TEAM_RE = re.compile(
     r"(\d[\d,.]*)\s*(?:(?:billion|million|thousand|bn|mn|k|m|b)(?![A-Za-z]))?\s*"
-    r"(?:full[- ]?time\s+)?(?:employees|employee|people|staff|team\s+members|headcount)",
+    r"(?:full[- ]?time\s+)?"
+    r"(?:employees|employee|people|staff|team\s+members|headcount|engineers|researchers)",
     re.IGNORECASE,
 )
 

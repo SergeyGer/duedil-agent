@@ -51,26 +51,53 @@ COMPANIES: list[dict] = [
         "headquarters": "San Francisco, USA",
         "deck_date": "2011 (Series B era)",
         "slides": [
-            ("Problem", "Travellers pay hotel prices for accommodation they do not want; "
-                        "homeowners sit on unused space they cannot monetise."),
-            ("Solution", "A two-sided marketplace: hosts list space, guests book it. "
-                         "Trust is handled by profiles, reviews and verified payments."),
-            ("Market", "Global travel accommodation. Public analyses put the addressable "
-                       "market in the hundreds of billions of dollars; Airbnb itself has "
-                       "never published a TAM for the 2011 round."),
-            ("Traction (2011)", "Airbnb reported roughly 1 million nights booked and listings "
-                                "in the tens of thousands across more than 10,000 cities."),
-            ("Business model", "Commission on each booking, charged to guest and host. "
-                               "No inventory ownership, no property leases."),
-            ("Team", "Brian Chesky (CEO), Joe Gebbia (CPO), Nathan Blecharczyk (CTO). "
-                     "Company headcount at the time: about 40 people."),
-            ("Funding", "Series B, July 2011: $112M led by Andreessen Horowitz, valuing the "
-                        "company at about $1.3B."),
-            ("Later reality (context for the reader)", "By its 2020 IPO Airbnb had become a "
-                                                       "public company; this deck describes the "
-                                                       "2011 position only."),
-            ("ARR", "Not disclosed in 2011 — the company reported bookings and nights, not "
-                    "recurring revenue."),
+            (
+                "Problem",
+                "Travellers pay hotel prices for accommodation they do not want; "
+                "homeowners sit on unused space they cannot monetise.",
+            ),
+            (
+                "Solution",
+                "A two-sided marketplace: hosts list space, guests book it. "
+                "Trust is handled by profiles, reviews and verified payments.",
+            ),
+            (
+                "Market",
+                "Global travel accommodation. Public analyses put the addressable "
+                "market in the hundreds of billions of dollars; Airbnb itself has "
+                "never published a TAM for the 2011 round.",
+            ),
+            (
+                "Traction (2011)",
+                "Airbnb reported roughly 1 million nights booked and listings "
+                "in the tens of thousands across more than 10,000 cities.",
+            ),
+            (
+                "Business model",
+                "Commission on each booking, charged to guest and host. "
+                "No inventory ownership, no property leases.",
+            ),
+            (
+                "Team",
+                "Brian Chesky (CEO), Joe Gebbia (CPO), Nathan Blecharczyk (CTO). "
+                "Company headcount at the time: about 40 people.",
+            ),
+            (
+                "Funding",
+                "Series B, July 2011: $112M led by Andreessen Horowitz, valuing the "
+                "company at about $1.3B.",
+            ),
+            (
+                "Later reality (context for the reader)",
+                "By its 2020 IPO Airbnb had become a "
+                "public company; this deck describes the "
+                "2011 position only.",
+            ),
+            (
+                "ARR",
+                "Not disclosed in 2011 — the company reported bookings and nights, not "
+                "recurring revenue.",
+            ),
         ],
         "sources": [
             "Business Insider — 'Airbnb's first-ever pitch deck' (2011 deck coverage)",
@@ -87,24 +114,43 @@ COMPANIES: list[dict] = [
         "headquarters": "San Francisco, USA",
         "deck_date": "2011 (Series B era)",
         "slides": [
-            ("Problem", "Getting a reliable car in a city is slow, opaque and expensive; "
-                        "payment is awkward and supply is unpredictable."),
-            ("Solution", "Tap a button, a car arrives, payment is automatic. Supply is "
-                         "managed centrally per city instead of by dispatch radio."),
-            ("Market", "Urban ground transportation. The 2011 deck framed it as the taxi and "
-                       "black-car market of a handful of launch cities, not a global TAM."),
-            ("Traction (2011)", "Operating in a small number of US cities, with the majority "
-                                "of trips in San Francisco; a few tens of thousands of trips "
-                                "per month."),
-            ("Why it scales", "Each new city is the same playbook: recruit drivers, seed "
-                              "demand, reach liquidity. Fixed product cost, repeating launch."),
-            ("Business model", "Per-ride commission. No fleet ownership, minimal marginal "
-                               "cost per additional trip."),
-            ("Team", "Travis Kalanick (CEO), Garrett Camp (chairman). About 30 employees in "
-                     "2011."),
+            (
+                "Problem",
+                "Getting a reliable car in a city is slow, opaque and expensive; "
+                "payment is awkward and supply is unpredictable.",
+            ),
+            (
+                "Solution",
+                "Tap a button, a car arrives, payment is automatic. Supply is "
+                "managed centrally per city instead of by dispatch radio.",
+            ),
+            (
+                "Market",
+                "Urban ground transportation. The 2011 deck framed it as the taxi and "
+                "black-car market of a handful of launch cities, not a global TAM.",
+            ),
+            (
+                "Traction (2011)",
+                "Operating in a small number of US cities, with the majority "
+                "of trips in San Francisco; a few tens of thousands of trips "
+                "per month.",
+            ),
+            (
+                "Why it scales",
+                "Each new city is the same playbook: recruit drivers, seed "
+                "demand, reach liquidity. Fixed product cost, repeating launch.",
+            ),
+            (
+                "Business model",
+                "Per-ride commission. No fleet ownership, minimal marginal "
+                "cost per additional trip.",
+            ),
+            ("Team", "Travis Kalanick (CEO), Garrett Camp (chairman). About 30 employees in 2011."),
             ("Funding", "Series B, December 2011: $32M, following a $11M Series A."),
-            ("ARR", "Not applicable at the time — Uber reported gross bookings, not "
-                    "recurring revenue."),
+            (
+                "ARR",
+                "Not applicable at the time — Uber reported gross bookings, not recurring revenue.",
+            ),
         ],
         "sources": [
             "Press coverage of Uber's 2011 Series B ($32M) and Series A ($11M)",
@@ -121,20 +167,39 @@ COMPANIES: list[dict] = [
         "headquarters": "San Francisco, USA",
         "deck_date": "2025",
         "slides": [
-            ("Problem", "Developers spend more time reading and editing code than writing it; "
-                        "existing assistants autocomplete lines, not intent."),
-            ("Solution", "An editor built around a model that understands the whole repository: "
-                         "multi-file edits, refactors and questions answered in place."),
-            ("Traction", "Reported ARR passed $100M within roughly two years of launch, then "
-                         "$500M (mid-2025); vendor and press reporting put it above that by "
-                         "the end of 2025."),
-            ("Growth", "Reported as the fastest B2B software company to reach $1B ARR — "
-                       "roughly two years, against five to seven for the previous generation "
-                       "of SaaS leaders."),
-            ("Team", "Founded by Michael Truell, Sualeh Asif, Arvid Lunnemark and Aman "
-                     "Sanger; engineering-heavy organisation."),
-            ("Business model", "Per-seat subscription, individual developers and enterprise "
-                               "teams, billed monthly or annually."),
+            (
+                "Problem",
+                "Developers spend more time reading and editing code than writing it; "
+                "existing assistants autocomplete lines, not intent.",
+            ),
+            (
+                "Solution",
+                "An editor built around a model that understands the whole repository: "
+                "multi-file edits, refactors and questions answered in place.",
+            ),
+            (
+                "Traction",
+                "Reported ARR passed $100M within roughly two years of launch, then "
+                "$500M (mid-2025); vendor and press reporting put it above that by "
+                "the end of 2025.",
+            ),
+            (
+                "Growth",
+                "Reported as the fastest B2B software company to reach $1B ARR — "
+                "roughly two years, against five to seven for the previous generation "
+                "of SaaS leaders.",
+            ),
+            (
+                "Team",
+                "Founded by Michael Truell (CEO), Sualeh Asif (CPO), Arvid Lunnemark "
+                "(CTO) and Aman Sanger. About 300 employees as of late 2025 - which is "
+                "the whole point: a $500M+ run rate on roughly 300 people.",
+            ),
+            (
+                "Business model",
+                "Per-seat subscription, individual developers and enterprise "
+                "teams, billed monthly or annually.",
+            ),
             ("Funding", "Series D, November 2025: $2.3B raised at a $29.3B valuation."),
             ("Market", "[NOT_FOUND] — no audited TAM was published with the round."),
         ],
@@ -143,6 +208,8 @@ COMPANIES: list[dict] = [
             "Valuation' (Nov 2025)",
             "SaaStr — 'Cursor Hit $1B ARR' analysis of reported growth",
             "CNBC / TechCrunch coverage of the 2025 round",
+            "DEV Community analysis - 'How Cursor Became the Fastest B2B Company to $1B ARR "
+            "with Just 300 Employees'",
         ],
     },
     {
@@ -154,21 +221,40 @@ COMPANIES: list[dict] = [
         "headquarters": "Stockholm, Sweden",
         "deck_date": "2026",
         "slides": [
-            ("Problem", "Building a product still requires writing code. Non-technical founders "
-                        "and product teams cannot turn an idea into working software."),
-            ("Solution", "Describe the app in natural language; Lovable generates a full-stack "
-                         "web application, deployable and editable."),
-            ("Traction", "Crossed $100M ARR around eight months after launch; reported to pass "
-                         "$400M ARR by early 2026, adding roughly $100M of revenue in a single "
-                         "month."),
-            ("Efficiency", "The company reported reaching that run rate with about 146 "
-                           "employees — an unusually high revenue-per-headcount ratio."),
-            ("Business model", "Subscription with usage-based credits; free tier feeding "
-                               "self-serve conversion."),
-            ("Team", "Co-founded by Anton Osika. Small, senior team; heavy automation instead "
-                     "of headcount."),
-            ("Funding", "$400M round at a $13.3B valuation, following earlier rounds through "
-                        "2025."),
+            (
+                "Problem",
+                "Building a product still requires writing code. Non-technical founders "
+                "and product teams cannot turn an idea into working software.",
+            ),
+            (
+                "Solution",
+                "Describe the app in natural language; Lovable generates a full-stack "
+                "web application, deployable and editable.",
+            ),
+            (
+                "Traction",
+                "Crossed $100M ARR around eight months after launch; reported to pass "
+                "$400M ARR by early 2026, adding roughly $100M of revenue in a single "
+                "month.",
+            ),
+            (
+                "Efficiency",
+                "The company reported reaching that run rate with about 146 "
+                "employees — an unusually high revenue-per-headcount ratio.",
+            ),
+            (
+                "Business model",
+                "Subscription with usage-based credits; free tier feeding self-serve conversion.",
+            ),
+            (
+                "Team",
+                "Co-founded by Anton Osika. Small, senior team; heavy automation instead "
+                "of headcount.",
+            ),
+            (
+                "Funding",
+                "$400M round at a $13.3B valuation, following earlier rounds through 2025.",
+            ),
             ("Market", "[NOT_FOUND] — no audited TAM was published with the round."),
         ],
         "sources": [
@@ -187,22 +273,44 @@ COMPANIES: list[dict] = [
         "headquarters": "San Francisco, USA",
         "deck_date": "2026",
         "slides": [
-            ("Problem", "Software teams spend a large share of their time on routine work: "
-                        "migrations, test coverage, ticket triage, dependency upgrades."),
-            ("Solution", "Devin, an agent that takes a ticket and works it end to end inside "
-                         "its own environment — editing, running tests and opening pull "
-                         "requests."),
-            ("Traction", "Enterprise deployments reported across financial services and "
-                         "technology customers; ARR figures are reported by press, not "
-                         "audited."),
-            ("Positioning", "Sells autonomous execution rather than assistance: output is a "
-                            "pull request, not a suggestion."),
-            ("Team", "Co-founded by Scott Wu with a team of competitive-programming "
-                     "backgrounds."),
-            ("Business model", "Enterprise contracts priced against engineering capacity, "
-                               "with usage-based components."),
-            ("Funding", "$400M raised at a $10.2B valuation (2025); reported acquisition of "
-                        "Windsurf the same year."),
+            (
+                "Problem",
+                "Software teams spend a large share of their time on routine work: "
+                "migrations, test coverage, ticket triage, dependency upgrades.",
+            ),
+            (
+                "Solution",
+                "Devin, an agent that takes a ticket and works it end to end inside "
+                "its own environment — editing, running tests and opening pull "
+                "requests.",
+            ),
+            (
+                "Traction",
+                "Enterprise deployments reported across financial services and "
+                "technology customers; ARR figures are reported by press, not "
+                "audited.",
+            ),
+            (
+                "Positioning",
+                "Sells autonomous execution rather than assistance: output is a "
+                "pull request, not a suggestion.",
+            ),
+            (
+                "Team",
+                "Co-founded by Scott Wu (CEO); a team of competitive-programming "
+                "backgrounds. About 15 engineers, each working alongside several Devin "
+                "instances - the company's own description of how it scales.",
+            ),
+            (
+                "Business model",
+                "Enterprise contracts priced against engineering capacity, "
+                "with usage-based components.",
+            ),
+            (
+                "Funding",
+                "$400M raised at a $10.2B valuation (2025); reported acquisition of "
+                "Windsurf the same year.",
+            ),
             ("ARR", "[NOT_FOUND] — the company has not published an audited ARR figure."),
             ("Market", "[NOT_FOUND] — no audited TAM was published."),
         ],

@@ -74,6 +74,13 @@ def test_find_team_mentions():
     assert find_team_mentions("no headcount here") == []
 
 
+def test_find_team_mentions_accepts_engineers_and_researchers():
+    # Technical decks describe their team this way ("about 15 engineers"), and it is as
+    # much a headcount claim as "employees" — the team-size rule has to see it.
+    assert find_team_mentions("About 15 engineers, each with several agents") == [15]
+    assert find_team_mentions("a research lab with 60 researchers") == [60]
+
+
 def test_find_traffic_mentions():
     assert find_traffic_mentions("about 1,500 monthly visits") == [1500]
     assert find_traffic_mentions("12k visits per month") == [12000]
