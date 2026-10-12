@@ -190,8 +190,12 @@ configuration, deployment, design rationale and troubleshooting — lives in the
 | Understand the trade-offs | [Design Decisions](https://github.com/SergeyGer/duedil-agent/wiki/Design-Decisions) |
 | Fix something that broke | [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) |
 
-Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck, the
-generated memo as Markdown and PDF, and the full state JSON behind it.
+Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck used by
+the tests and the demo, its generated memo as Markdown and PDF, the full state JSON behind it —
+and **[five pitch decks for real IT companies](examples/README.md)** (Airbnb, Uber, Cursor,
+Lovable, Cognition AI), reconstructed from public reporting so the pipeline can be run on
+realistic input. Those are reconstructions, not the companies' original documents; each deck
+prints its sources on its last page.
 
 ---
 
