@@ -182,6 +182,41 @@ That is Streamlit's own workaround, not a failure — the pinned `pyarrow` is do
 Cloud environment. Expect the Cloud log to disagree with the lockfile in exactly this way; it is
 not drift in the repository.
 
+### Hosted app runs a *mix* of two revisions (`TypeError` about an argument)
+
+Symptom: the app works until a specific button is pressed, then shows
+
+```
+TypeError: This app has encountered an error. The original error message is redacted...
+File "/mount/src/duedil-agent/app/ui.py", line 288, in main
+    data=markdown_to_pdf_bytes(memo, model=state.get("used_model") or ""),
+```
+
+while the same code runs fine locally and CI is green. That is **not** a code bug: the
+deployment is running a new `ui.py` with an old `report.py`, so a call passes a keyword the
+stale definition does not accept. It happened once, after `app/ui.py` and `app/report.py`
+changed in the same commit and the platform refreshed only part of the checkout.
+
+Two ways to confirm it is stale state rather than a real defect:
+
+1. **Line numbers.** The traceback names file and line, and the repository is the source of
+   truth: `raw.githubusercontent.com/<owner>/<repo>/main/app/ui.py` — if the line there is the
+   same as in the traceback, the UI is current and the *other* module is old.
+2. **Compare the deployed revision's history.** `git log -S'model: str = ""' -- app/report.py`
+   shows the commit that introduced the parameter; anything before it lacks it.
+
+Fix — force a clean checkout and a fresh interpreter, in this order:
+
+1. **Manage app → ⋮ → Reboot**;
+2. if the traceback survives the reboot, **⋮ → Clear cache**, then **Reboot** again;
+3. as a last resort, change a trivial value in the app's settings (or the `requirements.txt`
+   comment) so the platform performs a full rebuild instead of a partial refresh.
+
+**Prevention in this repository:** `tests/test_call_signatures.py` walks the AST of `app/` and
+fails when any call passes a keyword argument that no definition accepts. It reproduces this
+exact incident — with the same line number — if the parameter is removed, so the mistake is
+caught in CI instead of by a visitor.
+
 ### Streamlit reruns and loses the result
 
 Any widget change — including the language selector — triggers a rerun and clears the previous

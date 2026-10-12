@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added `tests/test_call_signatures.py`: it walks the AST of `app/` and fails when a call passes
+  a keyword argument that no definition accepts. It reproduces the incident where a hosted
+  deployment served a new `app/ui.py` with a stale `app/report.py` (same file and line number),
+  so the mismatch is now caught in CI rather than by a visitor. The wiki's Troubleshooting page
+  documents how to identify and clear that stale-deployment state.
+
 - Dollar amounts in the UI are escaped before Markdown rendering, so Streamlit no longer parses
   `$85,714` as LaTeX and renders it as "85, 714".
 
