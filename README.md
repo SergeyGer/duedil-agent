@@ -25,17 +25,22 @@ in a browser, no installation and no API keys.
 
 ## See it work
 
-A real run on a sample pitch deck — five agents, two passes of critical re-verification, and a
-memo that ends in **REJECT** because the deck does not survive scrutiny:
+A real run — five agents, two passes of critical re-verification, and a memo that ends in
+**REJECT** because the deck does not survive scrutiny. No upload needed: the sidebar offers
+**five bundled example decks**, and the run summary states which model produced the analysis:
 
 <video src="docs/media/demo-offline.mp4" controls width="820"></video>
 
-[▶ watch the 25-second walkthrough](docs/media/demo-offline.mp4) ·
+[▶ watch the 22-second walkthrough](docs/media/demo-offline.mp4) ·
 [the same pipeline against real APIs (47 s)](docs/media/demo-live.mp4)
 
-| Upload a deck | Agents work through it | Out comes the memo |
+| Pick a deck (or upload one) | Agents work through it | Out come the metrics, the verdict and the memo |
 |---|---|---|
 | ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result](docs/media/ui-results-en.png) |
+
+The results are rendered for a reader, not for a machine: metrics and the financial audit as
+tables, missing figures labelled `— (not in the deck)`, and the audit's conclusion in its own
+highlighted callout — ✅ above the benchmark, ⚠️ below, ❔ not computable.
 
 ---
 

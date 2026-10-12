@@ -23,6 +23,23 @@ def get_model_name() -> str:
     return os.getenv("DUE_DIL_MODEL", DEFAULT_MODEL)
 
 
+def model_label(model: str | None = None) -> str:
+    """Return a human-readable label for the model, owner included.
+
+    Every artefact has to state which model produced the analysis — "which model ran
+    this?" is the first question anyone asks about an LLM result, and a bare id
+    (``claude-3-5-sonnet``) does not say whose endpoint answered.
+    """
+
+    name = model or get_model_name()
+    lowered = name.lower()
+    if lowered.startswith("claude"):
+        return f"{name} (Anthropic)"
+    if lowered.startswith(("gpt", "o1", "o3", "o4", "chatgpt")):
+        return f"{name} (OpenAI)"
+    return name
+
+
 @lru_cache(maxsize=4)
 def _cached_llm(model: str, temperature: float):
     if model.lower().startswith("claude"):
@@ -46,4 +63,4 @@ def get_llm(temperature: float = 0.0, model: str | None = None):
     return _cached_llm(name, float(temperature))
 
 
-__all__ = ["get_llm", "get_model_name", "DEFAULT_MODEL"]
+__all__ = ["get_llm", "get_model_name", "model_label", "DEFAULT_MODEL"]

@@ -25,7 +25,7 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 
-from .config import get_llm
+from .config import get_llm, model_label
 from .prompts import CRITIC_SYSTEM, EXTRACTOR_SYSTEM, SUPERVISOR_SYSTEM
 from .state import VentureState, initial_state
 from .tools import get_search_tool, stringify_search_results
@@ -90,6 +90,7 @@ def agent_extractor(state: VentureState) -> dict:
     """Extract structured metrics from ``pitch_deck_raw`` (never invents data)."""
 
     deck = state.get("pitch_deck_raw") or ""
+    model = model_label()
 
     try:
         llm = get_llm()
@@ -102,15 +103,17 @@ def agent_extractor(state: VentureState) -> dict:
         metrics = _safe_json(_message_text(message))
     except Exception as exc:  # pragma: no cover - network/LLM failure path
         metrics = {}
-        log = f"[extractor] FAILED: {exc}"
+        log = f"[extractor] FAILED ({model}): {exc}"
     else:
-        log = f"[extractor] metrics extracted for '{metrics.get('company_name', '?')}'"
+        log = (
+            f"[extractor] metrics extracted for '{metrics.get('company_name', '?')}' using {model}"
+        )
 
     if not metrics:
         metrics = {}
     metrics.setdefault("website", state.get("website_url", ""))
 
-    return {"extracted_metrics": metrics, "progress_log": [log]}
+    return {"extracted_metrics": metrics, "used_model": model, "progress_log": [log]}
 
 
 # ---------------------------------------------------------------------------
