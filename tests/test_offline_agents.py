@@ -98,3 +98,23 @@ def test_founders_are_names_not_sentences():
 
 def test_the_website_argument_fills_the_gap():
     assert _metrics("cursor_deck.pdf")["website"] == "https://example.com"
+
+
+def test_founders_are_read_in_both_parser_modes():
+    """The label and its value may share a line or be split across lines.
+
+    LlamaParse emits `**Team** Brian Chesky (CEO), …`; the pypdf fallback used by a
+    deployment without `LLAMA_CLOUD_API_KEY` emits `**Team**` as its own paragraph, so the
+    value starts on the next line. Both were seen in CI and in the container.
+    """
+
+    same_line = "## **Team**\nBrian Chesky (CEO), Joe Gebbia (CPO)\n\n## **Funding**\n"
+    next_line = "## **Team**\n\nBrian Chesky (CEO), Joe Gebbia (CPO)\n\n## **Funding**\n"
+    separated = "## **Team**\n\nBrian Chesky — CEO, Joe Gebbia — CPO\n\n"
+    for text in (same_line, next_line, separated):
+        assert extract_metrics(text)["founders"][:2] == ["Brian Chesky", "Joe Gebbia"], text
+
+
+def test_role_notes_are_not_part_of_the_name():
+    metrics = extract_metrics("## **Team**\n\nTravis Kalanick (CEO), Garrett Camp (chairman)\n")
+    assert metrics["founders"] == ["Travis Kalanick", "Garrett Camp"]

@@ -169,11 +169,15 @@ def _founded_year(text: str) -> str:
 
 
 def _founders(text: str) -> list[str]:
+    # The value may sit after a separator on the same line ("Team: Jane Doe") or on the
+    # line below the label ("**Team**\n\nJane Doe, …") — the pypdf fallback produces the
+    # latter, because a PDF heading is its own paragraph.
     match = re.search(
-        r"founded by ([^.;\n]+)"
+        r"[Ff]ounded by ([^.;\n]+)"
         r"|[Cc]o-?founded by ([^.;\n]+)"
-        r"|Founders?\s*[:\-—]\s*([^\n]+)"
-        r"|\*\*(?:Team|Founders?)\*\*\s*[:\-—]?\s*([^\n]+)",
+        r"|[Ff]ounders?\s*[:\-—]\s*([^\n]+)"
+        r"|\*{0,2}(?:Team|Founders?)\*{0,2}\s*[:\-—]?\s*\n\s*([^\n]+)"
+        r"|\*{0,2}(?:Team|Founders?)\*{0,2}\s*[:\-—]\s*([^\n]+)",
         text,
     )
     if not match:
@@ -186,12 +190,20 @@ def _founders(text: str) -> list[str]:
         cleaned = candidate.strip(" *_().")
         # Drop the trailing company/location fragment ("... , Stockholm") and role notes
         # in brackets ("(CEO)"), then any leading verb the sentence started with.
-        cleaned = re.split(r"\s*\((?:CEO|CTO|CPO|COO|chief)", cleaned, flags=re.I)[0]
+        # Drop a role note in brackets: "(CEO)", "(chairman)" — with or without its
+        # closing bracket, since the sentence may be truncated.
+        cleaned = re.split(r"\s*\((?=[A-Za-z])", cleaned)[0]
         cleaned = re.sub(
             r"^(?:co-?)?founded by\s+|^founders?\s*[:\-—]?\s*", "", cleaned, flags=re.I
         )
         # "Anton Osika. Small, senior team" -> "Anton Osika"
         cleaned = cleaned.split(".")[0]
+        # A role may be attached with a dash instead of brackets: "Jane Doe — CEO".
+        cleaned = re.split(
+            r"\s*[—–-]\s*(?=(?:CEO|CTO|CPO|COO|CFO|chairman|founder|president)\b)",
+            cleaned,
+            flags=re.I,
+        )[0]
         cleaned = cleaned.strip(" *_().")
         if not cleaned or len(cleaned.split()) > 4:
             continue
