@@ -12,6 +12,7 @@ lives in :mod:`app.display`, so it can be unit-tested without a browser.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -77,6 +78,32 @@ def _literal(text: str) -> str:
     """Escape dollar signs so Streamlit renders money instead of LaTeX."""
 
     return text.replace("$", "\\$")
+
+
+def _llm_is_configured() -> bool:
+    """True when the provider that the configured model needs has a key."""
+
+    from app.config import get_model_name
+
+    if get_model_name().lower().startswith("claude"):
+        return bool(os.getenv("ANTHROPIC_API_KEY"))
+    return bool(os.getenv("OPENAI_API_KEY"))
+
+
+def _offline_mode() -> str | None:
+    """Decide whether this process must run offline, and in which mode.
+
+    An explicit ``DUE_DIL_OFFLINE_MODE`` wins. Otherwise a deployment with the LLM
+    keys missing would call a model it cannot reach and fall back to
+    "Investment Memo — Unknown Startup" for every input — which is exactly what the
+    hosted demo did. Falling back to the rule-based agents instead makes the demo
+    honest and shows a different analysis per deck.
+    """
+
+    requested = (os.getenv("DUE_DIL_OFFLINE_MODE") or "").strip()
+    if requested:
+        return requested
+    return None if _llm_is_configured() else "deck_aware"
 
 
 def _examples_dir() -> Path:
@@ -216,6 +243,14 @@ def main() -> None:
             return
     st.success(t("ok_parsed", count=len(deck_text)))
 
+    offline_mode = _offline_mode()
+    if offline_mode:
+        # Imported here so a live deployment never loads the demo module.
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        from demo_offline import install_stubs
+
+        install_stubs(delay=float(os.getenv("DUE_DIL_DEMO_DELAY", "0")), mode=offline_mode)
+
     graph = build_graph()
     state = initial_state(deck_text, website_url)
 
@@ -231,6 +266,9 @@ def main() -> None:
     if not memo:
         st.error(t("err_no_memo"))
         return
+
+    if offline_mode:
+        st.warning(t("offline_notice"))
 
     metrics = state.get("extracted_metrics") or {}
     benchmarks = state.get("financial_benchmarks") or {}

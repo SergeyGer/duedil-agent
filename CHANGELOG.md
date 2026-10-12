@@ -34,6 +34,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The hosted demo no longer answers the same thing for every deck.** Without API keys
+  the real nodes cannot run, so the app fell back to a static memo and every example
+  produced `Investment Memo — Unknown Startup`. `app/ui.py` now detects that no LLM is
+  configured (or honours `DUE_DIL_OFFLINE_MODE`) and switches to rule-based agents that
+  read the deck it was given, with an on-screen notice that no model ran. The five
+  example decks now produce five different analyses (Lovable: ARR `$100M`, 146 people,
+  `6.85×` the benchmark).
+- `app/offline_agents.py`: the deterministic Extractor/Supervisor behind that mode. It
+  reads titles, amounts and headcounts from the deck text and reports anything the deck
+  does not state as `[NOT_FOUND]` rather than guessing.
+- Offline artefacts no longer claim a model ran: the memo/PDF byline reads
+  `offline rules, deck_aware (no model)`.
+- `extract_company_name` accepts a plain-text title as well as a Markdown heading. The
+  `pypdf` fallback (used where `LLAMA_CLOUD_API_KEY` is absent, e.g. the hosted demo)
+  does not emit `#`, which is how the demo ended up calling every deck "Unknown Startup".
+
 - Added `tests/test_call_signatures.py`: it walks the AST of `app/` and fails when a call passes
   a keyword argument that no definition accepts. It reproduces the incident where a hosted
   deployment served a new `app/ui.py` with a stale `app/report.py` (same file and line number),
