@@ -95,13 +95,13 @@ platformdirs==4.13.0
 pluggy==1.6.0
 propcache==0.5.4
 protobuf==7.36.2
-pyarrow==25.0.1
+pyarrow==26.0.0
 pydantic==2.14.1
 pydantic-settings==2.15.0
 pydantic_core==2.50.1
 pydeck==0.9.3
 Pygments==2.21.0
-pypdf==6.20.0
+pypdf==6.20.1
 pytest==9.1.1
 pytest-cov==7.1.0
 python-dateutil==2.9.0.post0
