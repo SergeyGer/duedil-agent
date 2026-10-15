@@ -75,6 +75,19 @@ the host beyond Docker and the extension.
 * Port 8501 is forwarded automatically. It is the same port the scripts publish, so the
   two ways of running the project must not be used at the same time.
 
+**Stopping the stack while attached to the container.** The dev container *is* the `ui`
+service, so it cannot remove itself: the Docker CLI is not installed inside it and the
+socket is not mounted. Three ways work, in order of convenience:
+
+1. Command Palette → **Dev Containers: Reopen Folder Locally** — VS Code stops the compose
+   project as it detaches, and you are back on the host;
+2. run `./stop.sh` (or `.\stop.cmd`) from a terminal on the host, not from the container;
+3. close the VS Code window — `shutdownAction: stopCompose` stops the project.
+
+Mounting `/var/run/docker.sock` would make `docker compose down` work from inside, at the
+cost of giving the container control over every container on the machine — and it would
+still terminate the session issuing the command, which is why it is not configured.
+
 ### The hosted demo
 
 Streamlit Community Cloud deploys straight from `main` with `app/ui.py` as the entry point. It
