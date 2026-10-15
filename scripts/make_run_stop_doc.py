@@ -429,7 +429,9 @@ def build(output: Path) -> Path:
         "mounted into it. The two reliable ways below both take a few seconds.",
         bold_prefix="Why you cannot simply type stop in the container's terminal: ",
     )
-    document.add_paragraph("Way 1 — from VS Code (recommended; it also returns you to your laptop):")
+    document.add_paragraph(
+        "Way 1 — from VS Code (recommended; it also returns you to your laptop):"
+    )
     numbered(
         document,
         [
