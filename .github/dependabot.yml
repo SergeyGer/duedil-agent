@@ -22,6 +22,12 @@ updates:
       # `pip install -r requirements.txt` fail with ResolutionImpossible, which is
       # what broke this group's first PR. Re-enable once aiohttp allows 7.x.
       - dependency-name: "multidict"
+      # Streamlit 1.65 declares `pyarrow!=25.0.0,<26`, so any 26.x bump is
+      # uninstallable. Dependabot proposed one three times and each PR had to be
+      # repaired by hand, so the ceiling is recorded here instead. Re-enable when
+      # Streamlit accepts pyarrow 26.
+      - dependency-name: "pyarrow"
+        versions: [">=26"]
 
   # Workflow actions are pinned to commit SHAs (with the release tag in a trailing
   # comment), so CodeQL's `actions/unpinned-tag` check stays quiet. Dependabot
