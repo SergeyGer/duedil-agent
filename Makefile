@@ -64,3 +64,26 @@ docker-cli:
 clean:
 > -rm -rf .pytest_cache .ruff_cache htmlcov .coverage
 > -find . -name "__pycache__" -type d -prune -exec rm -rf {} +
+
+# --- containers ------------------------------------------------------------------
+# Nothing in this project starts by itself; these targets are how you start it.
+# The same commands exist for Windows in scripts/project.ps1.
+
+.PHONY: up down status logs shell devcontainer-doc
+up: ## Start the containers and wait until the app is healthy
+	./scripts/project.sh start
+
+down: ## Stop and remove the containers (generated data is kept)
+	./scripts/project.sh stop
+
+status: ## Show what is running and the auto-start settings
+	./scripts/project.sh status
+
+logs: ## Follow the application log
+	./scripts/project.sh logs
+
+shell: ## Open a shell inside the running container
+	./scripts/project.sh shell
+
+devcontainer-doc: ## Regenerate Run_Stop_Project.docx (personal, not committed)
+	python scripts/make_run_stop_doc.py

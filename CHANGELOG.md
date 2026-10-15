@@ -32,6 +32,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test behaviour no longer depends on a developer's `.env`: `conftest.py` clears
   `LLAMA_CLOUD_API_KEY`, exactly as it already did for tracing.
 
+### Added
+
+- **Explicit container control**: `scripts/project.sh` (Linux/macOS/WSL) and
+  `scripts/project.ps1` (Windows) with the same commands — `start`, `stop`, `restart`,
+  `status`, `logs`, `build`, `rebuild`, `shell`, `cli`, `clean`, `autostart` — plus
+  one-line wrappers `start.sh` / `stop.sh` / `start.cmd` / `stop.cmd` in the repository
+  root and matching `make up|down|status|logs|shell` targets.
+- **VS Code dev container**: `.devcontainer/devcontainer.json` reuses the compose service
+  `ui`, so the dev environment is the deployed image (pinned dependencies, non-root user),
+  with `/app/.venv` providing ruff and port 8501 forwarded.
+- `scripts/make_run_stop_doc.py` generates `Run_Stop_Project.docx`, a personal walkthrough
+  of starting and stopping the stack. The document is gitignored on purpose.
+
+### Changed
+
+- **The stack no longer starts on its own.** `restart: "no"` replaced
+  `restart: unless-stopped` on the UI service, and the compose project is pinned to the
+  name `duedil-agent`. Verified by restarting the Docker daemon with the stack up: the
+  container stays `Exited (0)`. Stopping frees port 8501; the data volume is kept.
+
 ### Fixed
 
 - **The hosted demo no longer answers the same thing for every deck.** Without API keys
