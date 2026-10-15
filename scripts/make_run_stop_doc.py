@@ -161,7 +161,9 @@ def setup(document: Document) -> None:
 
     footer = section.footer.paragraphs[0]
     footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    footer.add_run("Personal copy — not part of the repository (Run_Stop_Project.docx)").font.size = Pt(8)
+    footer.add_run(
+        "Personal copy — not part of the repository (Run_Stop_Project.docx)"
+    ).font.size = Pt(8)
     if footer.runs:
         footer.runs[0].font.color.rgb = MUTED
 
@@ -219,7 +221,9 @@ def build(output: Path) -> Path:
     field(paragraph, r'TOC \o "1-2" \h \z \u')
     note = document.add_paragraph()
     note.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = note.add_run("(If the contents look empty: click it and press F9, or use References → Update Table.)")
+    run = note.add_run(
+        "(If the contents look empty: click it and press F9, or use References → Update Table.)"
+    )
     run.font.size = Pt(9)
     run.font.color.rgb = MUTED
 
@@ -235,9 +239,24 @@ def build(output: Path) -> Path:
         document,
         ["Name", "What it is", "Starts when", "Address"],
         [
-            ["duedil-agent-ui", "The Streamlit web application", "./start.sh, Docker Desktop, or VS Code", "http://localhost:8501"],
-            ["duedil-agent-cli", "Command-line runs (no server)", "Only when you ask for it; exits when the run finishes", "—"],
-            ["duedil-agent_duedil-data", "Volume holding generated memos (persists across stops)", "—", "inside Docker"],
+            [
+                "duedil-agent-ui",
+                "The Streamlit web application",
+                "./start.sh, Docker Desktop, or VS Code",
+                "http://localhost:8501",
+            ],
+            [
+                "duedil-agent-cli",
+                "Command-line runs (no server)",
+                "Only when you ask for it; exits when the run finishes",
+                "—",
+            ],
+            [
+                "duedil-agent_duedil-data",
+                "Volume holding generated memos (persists across stops)",
+                "—",
+                "inside Docker",
+            ],
         ],
     )
     document.add_paragraph(
@@ -248,7 +267,7 @@ def build(output: Path) -> Path:
     document.add_heading("Why nothing starts by itself", level=2)
     document.add_paragraph(
         "Docker can restart containers automatically. This project switched that off on purpose "
-        "— the compose file sets restart: \"no\" for both services. Verified behaviour:"
+        '— the compose file sets restart: "no" for both services. Verified behaviour:'
     )
     bullets(
         document,
@@ -289,7 +308,10 @@ def build(output: Path) -> Path:
 
     document.add_heading("Stop", level=2)
     document.add_paragraph("Any of these frees the machine completely:")
-    code(document, "REM double-click, or from a terminal:\n.\\stop.cmd\n\nREM the same thing, explicitly:\n.\\scripts\\project.ps1 stop")
+    code(
+        document,
+        "REM double-click, or from a terminal:\n.\\stop.cmd\n\nREM the same thing, explicitly:\n.\\scripts\\project.ps1 stop",
+    )
     document.add_paragraph(
         "Stopping removes the containers but keeps the volume with the generated memos, so the next "
         "start is fast and your reports are still there."
@@ -431,11 +453,27 @@ def build(output: Path) -> Path:
         [
             ["Start working", r".\start.cmd", "./start.sh"],
             ["Stop for today", r".\stop.cmd", "./stop.sh"],
-            ["See if it is running", r".\scripts\project.ps1 status", "./scripts/project.sh status"],
+            [
+                "See if it is running",
+                r".\scripts\project.ps1 status",
+                "./scripts/project.sh status",
+            ],
             ["Watch the log", r".\scripts\project.ps1 logs", "./scripts/project.sh logs"],
-            ["Run a deck through the CLI", r".\scripts\project.ps1 cli examples\cursor_deck.pdf https://cursor.com", "./scripts/project.sh cli examples/cursor_deck.pdf https://cursor.com"],
-            ["Rebuild after changing dependencies", r".\scripts\project.ps1 rebuild", "./scripts/project.sh rebuild"],
-            ["Remove everything of this project", r".\scripts\project.ps1 clean", "./scripts/project.sh clean"],
+            [
+                "Run a deck through the CLI",
+                r".\scripts\project.ps1 cli examples\cursor_deck.pdf https://cursor.com",
+                "./scripts/project.sh cli examples/cursor_deck.pdf https://cursor.com",
+            ],
+            [
+                "Rebuild after changing dependencies",
+                r".\scripts\project.ps1 rebuild",
+                "./scripts/project.sh rebuild",
+            ],
+            [
+                "Remove everything of this project",
+                r".\scripts\project.ps1 clean",
+                "./scripts/project.sh clean",
+            ],
         ],
     )
 

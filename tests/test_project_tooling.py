@@ -18,7 +18,18 @@ MAKEFILE = REPO_ROOT / "Makefile"
 DEVCONTAINER = REPO_ROOT / ".devcontainer" / "devcontainer.json"
 
 #: Commands both scripts must offer, with the same names.
-COMMANDS = ["start", "stop", "restart", "status", "logs", "build", "rebuild", "shell", "cli", "clean"]
+COMMANDS = [
+    "start",
+    "stop",
+    "restart",
+    "status",
+    "logs",
+    "build",
+    "rebuild",
+    "shell",
+    "cli",
+    "clean",
+]
 
 
 def _compose_text() -> str:
@@ -67,7 +78,9 @@ def test_both_scripts_offer_the_same_commands():
 def test_wrappers_and_make_targets_forward_to_the_script():
     for wrapper, verb in ((REPO_ROOT / "start.sh", "start"), (REPO_ROOT / "stop.sh", "stop")):
         text = wrapper.read_text(encoding="utf-8")
-        assert f'exec "$BASE/scripts/project.sh" {verb}' in text, f"{wrapper.name} does not forward '{verb}'"
+        assert f'exec "$BASE/scripts/project.sh" {verb}' in text, (
+            f"{wrapper.name} does not forward '{verb}'"
+        )
 
     makefile = MAKEFILE.read_text(encoding="utf-8")
     for target, command in (
@@ -105,11 +118,15 @@ def test_devcontainer_uses_the_compose_service():
     post_create = config["postCreateCommand"]
     assert "--system-site-packages" in post_create
     assert "ruff" in post_create
-    assert "pytest==" not in post_create, "pytest versions must stay pinned in requirements.txt only"
+    assert "pytest==" not in post_create, (
+        "pytest versions must stay pinned in requirements.txt only"
+    )
 
 
 def test_the_personal_document_is_not_committed():
     gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
     assert "Run_Stop_Project.docx" in gitignore
     dockerignore = (REPO_ROOT / ".dockerignore").read_text(encoding="utf-8")
-    assert ".devcontainer" in dockerignore, "the dev container config is not part of the runtime image"
+    assert ".devcontainer" in dockerignore, (
+        "the dev container config is not part of the runtime image"
+    )
