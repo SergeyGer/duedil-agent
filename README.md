@@ -211,7 +211,7 @@ which builds the same image and serves the app on <http://localhost:8501>.
 
 See [Installation and Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment)
 for the full picture, and `Run_Stop_Project.docx` (generated locally by
-`make devcontainer-doc`, not committed) for a printable walkthrough.
+`make devcontainer-doc`, Russian; `make devcontainer-doc-en` for English; not committed) for a printable walkthrough.
 
 Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck used by
 the tests and the demo, its generated memo as Markdown and PDF, the full state JSON behind it —
