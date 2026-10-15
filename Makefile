@@ -85,5 +85,8 @@ logs: ## Follow the application log
 shell: ## Open a shell inside the running container
 	./scripts/project.sh shell
 
-devcontainer-doc: ## Regenerate Run_Stop_Project.docx (personal, not committed)
-	python scripts/make_run_stop_doc.py
+devcontainer-doc: ## Regenerate Run_Stop_Project.docx in Russian (personal, not committed)
+	python scripts/make_run_stop_doc.py --lang ru
+
+devcontainer-doc-en: ## Same document in English
+	python scripts/make_run_stop_doc.py --lang en --out Run_Stop_Project_EN.docx
