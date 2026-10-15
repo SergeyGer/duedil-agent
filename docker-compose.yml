@@ -4,6 +4,17 @@
 #   docker compose up --build
 #   open http://localhost:8501
 #
+# Nothing here starts by itself. `restart: "no"` means the services do not come back
+# after a server reboot or a Docker daemon restart, and they only stay up while a
+# work session is open. Start and stop the stack with the project scripts, which work
+# the same way on Linux and Windows:
+#
+#   ./scripts/project.sh start        # PowerShell: .\scripts\project.ps1 start
+#   ./scripts/project.sh stop
+#   ./scripts/project.sh status
+#
+# See Run_Stop_Project.docx in the repository root for the full walkthrough.
+#
 # The CLI is a separate, profile-gated service (it exits when the run finishes):
 #
 #   docker compose run --rm cli examples/sample_deck.pdf https://nimbusai.example
@@ -11,6 +22,8 @@
 # `docker compose run` always mounts the volumes below, and the named volume owns
 # /app/data, so the container writes memos with `duedil` ownership rather than
 # leaving root-owned files behind on the host.
+
+name: duedil-agent
 
 services:
   ui:
@@ -32,7 +45,12 @@ services:
       - duedil-data:/app/data
       # Read-only access to the bundled sample deck.
       - ./examples:/app/examples:ro
-    restart: unless-stopped
+    # Deliberately `no`. The alternatives (`always`, `unless-stopped`) bring the service
+    # back when the Docker daemon starts, i.e. after a server reboot, and then it holds
+    # port 8501 until someone stops it by hand — which is what this project must not do.
+    # A crashed process inside an active session is restarted by the scripts instead, so
+    # the behaviour is visible rather than silent.
+    restart: "no"
     healthcheck:
       test:
         - CMD
@@ -45,8 +63,10 @@ services:
       start_period: 20s
 
   # Usage: docker compose run --rm cli <deck.pdf> [url] [options]
+  # Profile-gated, so it is not part of a plain `up` and never runs unattended.
   cli:
     profiles: ["cli"]
+    restart: "no"
     build:
       context: .
       dockerfile: Dockerfile

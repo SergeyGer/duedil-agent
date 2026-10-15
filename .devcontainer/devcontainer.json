@@ -1,0 +1,83 @@
+{
+  // Dev Containers configuration for DueDil.Agent (VS Code + Docker).
+  //
+  // "Open Folder in Container" builds the same image the rest of the project uses, so
+  // the interpreter, the pinned dependencies and the non-root runtime user are identical
+  // to production. The app itself starts inside the container; VS Code attaches to it.
+  //
+  // The service has `restart: "no"` in docker-compose.yml, so a container started here
+  // does not come back after a reboot — reopen the folder (or run ./start.sh) to work.
+  "name": "DueDil.Agent",
+
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "ui",
+  "workspaceFolder": "/app",
+
+  // The service keeps its own command (`streamlit run app/streamlit_app.py`), so the app
+  // is served on http://localhost:8501 while you work in the container.
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose",
+
+  // Match the container user to your host UID so the source tree stays writable from
+  // the container (no effect on Windows/macOS, where Docker Desktop handles this).
+  "updateRemoteUserUID": true,
+  "remoteUser": "duedil",
+
+  // Pinned rather than "latest": a floating image changes the toolchain under the
+  // project without a commit to point at. Both support Python 3.12, which the image uses.
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-docker",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"],
+        "python.analysis.extraPaths": ["/app"],
+        "editor.formatOnSave": false,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+        },
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // ruff is not in the runtime image (it is a development tool) and /usr/local belongs to
+  // root, so the container gets its own writable virtual environment layered on top of the
+  // installed packages. `--system-site-packages` is what keeps pytest, pytest-cov and the
+  // pinned requirements visible from the image; only ruff is added, so the versions in
+  // requirements.txt stay the single source of truth. The venv lives in the mounted
+  // workspace, so it survives container rebuilds (and is gitignored).
+  "postCreateCommand": "python -m venv --system-site-packages /app/.venv && /app/.venv/bin/python -m pip install --quiet --upgrade pip && /app/.venv/bin/python -m pip install --quiet 'ruff==0.16.10'",
+
+  "forwardPorts": [8501],
+  "portsAttributes": {
+    "8501": {
+      "label": "DueDil.Agent (Streamlit)",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // The Docker socket is not needed inside the container for this project.
+  "mounts": [],
+
+  "remoteEnv": {
+    "PYTHONPATH": "/app",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  }
+}

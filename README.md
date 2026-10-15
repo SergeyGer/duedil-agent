@@ -196,6 +196,23 @@ configuration, deployment, design rationale and troubleshooting — lives in the
 | Understand the trade-offs | [Design Decisions](https://github.com/SergeyGer/duedil-agent/wiki/Design-Decisions) |
 | Fix something that broke | [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) |
 
+## Run it locally
+
+```bash
+./start.sh      # Linux/macOS/WSL: build if needed, start, wait until healthy
+./stop.sh       # and this frees the machine again
+```
+
+On Windows the same commands are `.\start.cmd` and `.\stop.cmd`. Nothing in this project
+starts by itself — the compose services use `restart: "no"`, so a reboot never brings the
+stack back on its own — and `./scripts/project.sh status` shows what is running.
+VS Code users can open the folder in a **dev container** (`.devcontainer/` is included),
+which builds the same image and serves the app on <http://localhost:8501>.
+
+See [Installation and Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment)
+for the full picture, and `Run_Stop_Project.docx` (generated locally by
+`make devcontainer-doc`, not committed) for a printable walkthrough.
+
 Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck used by
 the tests and the demo, its generated memo as Markdown and PDF, the full state JSON behind it —
 and **[five pitch decks for real IT companies](examples/README.md)** (Airbnb, Uber, Cursor,

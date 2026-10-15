@@ -1,3 +1,5 @@
+# VS Code dev container configuration (not part of the runtime image)
+.devcontainer
 # Keep the build context small and make the image independent of the host state.
 # Anything excluded here is also excluded from `COPY` in the Dockerfile.
 

@@ -29,6 +29,52 @@ The same workflow smoke-tests the image it just published: it starts it and wait
 release instead of reaching users. GitHub Packages storage and Actions minutes are free for
 public repositories, and the build cache is reused between runs.
 
+### Starting and stopping the local stack
+
+Nothing in this project starts by itself. Both compose services declare
+`restart: "no"`, so after a server reboot — or a Docker daemon restart — the containers
+stay down until someone asks for them. That is deliberate: a development stack should not
+hold port 8501 (or memory) while another project is being worked on.
+
+| Platform | Start | Stop | Status |
+|---|---|---|---|
+| Linux / macOS / WSL | `./start.sh` | `./stop.sh` | `./scripts/project.sh status` |
+| Windows PowerShell | `.\start.cmd` | `.\stop.cmd` | `.\scripts\project.ps1 status` |
+
+`scripts/project.sh` and `scripts/project.ps1` expose the same commands
+(`start`, `stop`, `restart`, `status`, `logs`, `build`, `rebuild`, `shell`, `cli`,
+`clean`, `autostart`), and the one-line wrappers in the repository root simply forward to
+them, so nobody has to type a path twice. Compose runs under the fixed project name
+`duedil-agent`, which keeps this stack's containers, network and volumes separate from
+every other project on the machine.
+
+Verified behaviour (worth knowing before trusting it): restarting the Docker daemon with
+the stack up leaves the container `Exited (0)` and it does **not** come back. Stopping frees
+the port, and the generated memos survive in the `duedil-agent_duedil-data` volume.
+
+`./scripts/project.sh autostart off` additionally disables the Docker daemon itself at
+boot, for a machine where Docker should only run on demand. The trade-off is that
+`sudo systemctl start docker` becomes a manual step after every reboot.
+
+### VS Code dev container
+
+`.devcontainer/devcontainer.json` points at the compose service `ui`, so
+**Dev Containers: Reopen in Container** builds and starts exactly what the rest of the
+project deploys: the same image, the same pinned dependencies, the same non-root user
+`duedil`, with the repository bind-mounted at `/app`. Nothing needs to be installed on
+the host beyond Docker and the extension.
+
+* `overrideCommand: false` — the service keeps its own command, so the app is served on
+  <http://localhost:8501> while the container is open.
+* `shutdownAction: stopCompose` — closing the window stops the containers, which is what
+  you want when switching to another project.
+* `postCreateCommand` creates `/app/.venv` with `--system-site-packages` and installs
+  **only** `ruff`: pytest and pytest-cov already come from `requirements.txt` inside the
+  image, so those pins stay the single source of truth. The venv lives in the workspace
+  and is gitignored.
+* Port 8501 is forwarded automatically. It is the same port the scripts publish, so the
+  two ways of running the project must not be used at the same time.
+
 ### The hosted demo
 
 Streamlit Community Cloud deploys straight from `main` with `app/ui.py` as the entry point. It

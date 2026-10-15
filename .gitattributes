@@ -10,3 +10,7 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# Windows batch wrappers keep CRLF so they look right in Notepad and run natively.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
