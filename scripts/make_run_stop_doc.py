@@ -419,6 +419,50 @@ def build(output: Path) -> Path:
         "container but free the machine, use the command palette entry "
         "“Dev Containers: Reopen Folder Locally”."
     )
+
+    document.add_heading("How to stop everything while you are inside the container", level=2)
+    callout(
+        document,
+        "While VS Code is attached, this container IS the application container — the very one the "
+        "stop command would remove. Asking it to remove itself is why the direct approach does not "
+        "work: the Docker CLI is not installed inside the container and the Docker socket is not "
+        "mounted into it. The two reliable ways below both take a few seconds.",
+        bold_prefix="Why you cannot simply type stop in the container's terminal: ",
+    )
+    document.add_paragraph("Way 1 — from VS Code (recommended; it also returns you to your laptop):")
+    numbered(
+        document,
+        [
+            "Press F1 (or Ctrl+Shift+P) to open the Command Palette.",
+            "Type and run: Dev Containers: Reopen Folder Locally.",
+            "Wait until the window reloads in the bottom-left corner it should no longer say “Dev Container”.",
+            "Everything is stopped now: VS Code ran the stop for the compose project, and the app is no longer listening on port 8501.",
+            "Optional confirmation in the local terminal: .\\scripts\\project.ps1 status (Windows) or ./scripts/project.sh status (Linux). It should report that no container of the project exists.",
+        ],
+    )
+    document.add_paragraph("Way 2 — a second terminal outside the container:")
+    numbered(
+        document,
+        [
+            "Open a normal terminal on the host (Windows Terminal / PowerShell, or an SSH session to the Linux server). Do not use the terminal inside VS Code — it lives in the container.",
+            "Run the stop command: .\\stop.cmd on Windows, or ./stop.sh on the server.",
+            "VS Code notices that the container is gone and offers to reopen the folder locally (or does it on its own). The containers, including the one VS Code was attached to, are removed.",
+        ],
+    )
+    document.add_paragraph(
+        "Way 3 — close the window. Clicking the X on the VS Code window also stops the stack, because "
+        "the configuration sets shutdownAction: stopCompose. Use this when you are leaving for the day "
+        "and do not need to confirm anything."
+    )
+    note = document.add_paragraph()
+    run = note.add_run(
+        "If you ever do want the Docker CLI inside the container, it can be added by mounting "
+        "/var/run/docker.sock and installing the client — but that grants the container control over "
+        "every container on the machine, and stopping the stack would still kill the session you are "
+        "typing in. The three ways above exist so that is unnecessary."
+    )
+    run.font.size = Pt(9)
+    run.font.color.rgb = MUTED
     callout(
         document,
         "The dev container keeps using port 8501. If it is already taken because you started the app "
