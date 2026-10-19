@@ -192,7 +192,9 @@ def test_every_referenced_compose_variable_is_real():
     compose = (REPO_ROOT / "docker-compose.yml").read_text(encoding="utf-8")
     referenced = set(re.findall(r"\b(DUEDIL_[A-Z_]+|COMPOSE_PROJECT_NAME)\b", text))
     unknown = {name for name in referenced if name not in compose}
-    assert not unknown, f"the guide names compose variables that the compose file ignores: {unknown}"
+    assert not unknown, (
+        f"the guide names compose variables that the compose file ignores: {unknown}"
+    )
 
 
 def test_the_guide_mentions_the_current_server_address():
