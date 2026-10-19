@@ -420,7 +420,7 @@ RU = Content(
             + "Вход на него — только по SSH-ключу (см. раздел 4), пользователь root, каталог "
             + "проекта /root/projects/duedil-agent/duedil-agent.",
         ),
-        ("code", "ssh duedil\ncd /root/projects/duedil-agent/duedil-agent"),
+        ("code", "ssh Hetzner\ncd /root/projects/duedil-agent/duedil-agent"),
         ("p", "Дальше — те же команды в синтаксисе bash:"),
         (
             "code",
@@ -487,41 +487,70 @@ RU = Content(
             + "тот же ключ даёт доступ и к проекту (git, scp, VS Code Remote-SSH), и к DeepSeek "
             + "Harness (раздел 10).",
         ),
+        ("h2", "Фактический config (текущее значение)"),
+        (
+            "p",
+            "Ниже — реальный ~/.ssh/config, который используется сейчас. Host в нём называется "
+            + "Hetzner, ключ — ~/.ssh/id_ed25519, поэтому все команды в этом документе используют "
+            + "ssh Hetzner.",
+        ),
+        (
+            "code",
+            "Host Hetzner 188.245.2.148\n"
+            + "    HostName 188.245.2.148\n"
+            + "    User root\n"
+            + "    IdentityFile ~/.ssh/id_ed25519\n"
+            + "    IdentitiesOnly yes\n"
+            + "    AddKeysToAgent yes\n"
+            + "    ServerAliveInterval 30\n"
+            + "    ServerAliveCountMax 4\n"
+            + "    TCPKeepAlive yes\n"
+            + "    PasswordAuthentication no\n"
+            + "    KbdInteractiveAuthentication no\n"
+            + "    PreferredAuthentications publickey",
+        ),
+        (
+            "bullets",
+            [
+                "Host Hetzner 188.245.2.148 — первый псевдоним, второй адрес; достаточно ssh Hetzner.",
+                "IdentityFile ~/.ssh/id_ed25519 — файл приватного ключа; открытая часть лежит рядом "
+                + "как id_ed25519.pub.",
+                "PasswordAuthentication no и KbdInteractiveAuthentication no — только ключи; "
+                + "запасного входа по паролю нет.",
+                "PreferredAuthentications publickey — пробуется только ключ, без перебора методов.",
+                "AddKeysToAgent yes — ключ один раз попадает в агент и не спрашивает пассфразу "
+                + "каждый раз.",
+                "ServerAliveInterval 30 и ServerAliveCountMax 4 — обрыв связи замечается примерно за "
+                + "две минуты, а не висит бесконечно.",
+            ],
+        ),
         ("h2", "Windows: PowerShell (OpenSSH входит в Windows 10 и 11)"),
         (
             "steps",
             [
                 "Проверьте, что клиент SSH есть: ssh -V. Если команда не найдена — Параметры → "
                 + "Приложения → Дополнительные компоненты → добавьте «Клиент OpenSSH».",
-                "Создайте ключ (passphrase — надёжная фраза, её спросят при первом использовании): "
-                + 'ssh-keygen -t ed25519 -C "alice@laptop" -f $env:USERPROFILE\\.ssh\\duedil',
-                "Покажите открытую часть: Get-Content $env:USERPROFILE\\.ssh\\duedil.pub — это одна "
-                + "строка, начинающаяся с ssh-ed25519.",
-                "Отправьте открытую часть на сервер (потребуется пароль root один раз; если пароль "
-                + "уже отключён — попросите администратора добавить строку, см. ниже): "
-                + 'type $env:USERPROFILE\\.ssh\\duedil.pub | ssh root@188.245.2.148 "mkdir -p ~/.ssh '
-                + '&& chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"',
-                "Создайте удобный псевдоним: файл $env:USERPROFILE\\.ssh\\config (создайте, если нет) "
-                + "с содержимым из блока ниже.",
-                'Проверьте вход: ssh duedil "hostname && whoami" — должно ответить именем сервера '
-                + "и root.",
+                "Проверьте, есть ли уже ключ: Get-ChildItem $env:USERPROFILE\\.ssh\\id_ed25519*. "
+                + "Если файла нет — создайте его (passphrase — надёжная фраза): "
+                + 'ssh-keygen -t ed25519 -C "alice@laptop" -f $env:USERPROFILE\\.ssh\\id_ed25519',
+                "Покажите открытую часть: Get-Content $env:USERPROFILE\\.ssh\\id_ed25519.pub — "
+                + "это одна строка, начинающаяся с ssh-ed25519.",
+                "Отправьте открытую часть на сервер (потребуется пароль root один раз): "
+                + 'type $env:USERPROFILE\\.ssh\\id_ed25519.pub | ssh root@188.245.2.148 "mkdir -p '
+                + "~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 "
+                + '~/.ssh/authorized_keys"',
+                "Убедитесь, что в $env:USERPROFILE\\.ssh\\config есть блок Host Hetzner из "
+                + "раздела выше (файл создайте, если его нет).",
+                'Проверьте вход: ssh Hetzner "hostname && whoami" — должно ответить именем сервера и '
+                + "root.",
             ],
-        ),
-        (
-            "code",
-            "Host duedil\n"
-            + "    HostName 188.245.2.148\n"
-            + "    User root\n"
-            + "    IdentityFile ~/.ssh/duedil\n"
-            + "    IdentitiesOnly yes\n"
-            + "    ServerAliveInterval 60",
         ),
         ("h2", "macOS и Linux"),
         (
             "code",
-            'ssh-keygen -t ed25519 -C "alice@laptop" -f ~/.ssh/duedil\n'
-            + "ssh-copy-id -i ~/.ssh/duedil.pub root@188.245.2.148\n"
-            + 'ssh duedil "hostname && whoami"      # после добавления блока Host в ~/.ssh/config',
+            'ssh-keygen -t ed25519 -C "alice@laptop" -f ~/.ssh/id_ed25519\n'
+            + "ssh-copy-id -i ~/.ssh/id_ed25519.pub root@188.245.2.148\n"
+            + 'ssh Hetzner "hostname && whoami"      # после добавления блока Host в ~/.ssh/config',
         ),
         ("h2", "Если пароль уже отключён и ключа ещё нет"),
         (
@@ -530,24 +559,29 @@ RU = Content(
         ),
         (
             "code",
-            'ssh duedil "mkdir -p ~/.ssh && chmod 700 ~/.ssh && '
+            'ssh Hetzner "mkdir -p ~/.ssh && chmod 700 ~/.ssh && '
             + "echo 'ssh-ed25519 AAAA... alice@laptop' >> ~/.ssh/authorized_keys && "
             + 'chmod 600 ~/.ssh/authorized_keys"',
         ),
         (
+            "p",
+            "На сервере сейчас лежат три открытых ключа — по одному на ноутбук (подписи в конце "
+            + "строк: nuc-mini-2026-10, ThinkPad-2026-10, lg-gram-2026-10). Добавляйте новый ключ "
+            + "новой строкой, не заменяя существующие.",
+        ),
+        (
             "bullets",
             [
-                "Приватный ключ (~/.ssh/duedil) не покидает ноутбук и не пересылается никому — ни в "
-                + "чатах, ни по почте.",
-                "Права: приватный ключ 600, каталог ~/.ssh 700, authorized_keys 600 (на Windows это "
-                + "делает сам sshd при первом входе).",
+                "Приватный ключ (~/.ssh/id_ed25519) не покидает ноутбук и не пересылается никому — ни "
+                + "в чатах, ни по почте; на сервер уходит только .pub.",
+                "Права: приватный ключ 600, каталог ~/.ssh 700, authorized_keys 600.",
                 "Passphrase удобно держать в ssh-agent: в Windows — Start-Service ssh-agent и "
-                + 'ssh-add $env:USERPROFILE\\.ssh\\duedil; в Linux/macOS — eval "$(ssh-agent -s)" и '
-                + "ssh-add ~/.ssh/duedil.",
-                "Один ключ на ноутбук, а не один на все: так ключ можно отозвать отдельно (удалить "
-                + "строку из authorized_keys на сервере).",
-                "Если ноутбук потерян — удалите его строку из ~/.ssh/authorized_keys на сервере и "
-                + "проверьте вход в fail2ban (раздел 11).",
+                + 'ssh-add $env:USERPROFILE\\.ssh\\id_ed25519; в Linux/macOS — eval "$(ssh-agent -s)" '
+                + "и ssh-add ~/.ssh/id_ed25519.",
+                "Один ключ на ноутбук, а не один на все: отзыв доступа — удаление одной строки в "
+                + "~/.ssh/authorized_keys на сервере.",
+                "Если ноутбук потерян — удалите его строку из authorized_keys и проверьте журнал "
+                + "входов (раздел 11).",
             ],
         ),
         # --- 5 -----------------------------------------------------------------
@@ -650,7 +684,7 @@ RU = Content(
                 + "исчезнуть.",
                 "Всё остановлено: VS Code сам выполнил остановку compose-проекта, и приложение больше "
                 + "не слушает порт.",
-                "Проверка (необязательно), в локальном терминале: ssh duedil "
+                "Проверка (необязательно), в локальном терминале: ssh Hetzner "
                 + '"cd /root/projects/duedil-agent/duedil-agent && ./scripts/project.sh status".',
             ],
         ),
@@ -921,7 +955,7 @@ RU = Content(
         (
             "steps",
             [
-                "На ноутбуке выполните: ssh -N -L 3080:127.0.0.1:3080 duedil — окно должно остаться "
+                "На ноутбуке выполните: ssh -N -L 3080:127.0.0.1:3080 Hetzner — окно должно остаться "
                 + "открытым, в нём не будет приглашения.",
                 "Откройте в браузере http://127.0.0.1:3080 — это интерфейс на сервере, но по "
                 + "защищённому каналу.",
@@ -931,7 +965,7 @@ RU = Content(
         (
             "p",
             "Если 3080 на ноутбуке уже занят (например, у вас там свой экземпляр), возьмите другой "
-            + "локальный порт: ssh -N -L 3081:127.0.0.1:3080 duedil и открывайте "
+            + "локальный порт: ssh -N -L 3081:127.0.0.1:3080 Hetzner и открывайте "
             + "http://127.0.0.1:3081.",
         ),
         ("h2", "Способ 2: VS Code Remote-SSH"),
@@ -958,7 +992,7 @@ RU = Content(
             "# на сервере, от своего пользователя\n"
             + "DSH_HOME=$HOME/.dsh-alice dsh web --host 127.0.0.1 --port 3091 --no-open\n\n"
             + "# на ноутбуке\n"
-            + "ssh -N -L 3091:127.0.0.1:3091 alice@188.245.2.148\n"
+            + "ssh -N -L 3091:127.0.0.1:3091 Hetzner   # или alice@188.245.2.148, если у вас свой пользователь\n"
             + "# затем http://127.0.0.1:3091",
         ),
         (
@@ -1090,7 +1124,11 @@ RU = Content(
                     r".\scripts\project.ps1 rebuild",
                     "./scripts/project.sh rebuild",
                 ],
-                ["Открыть DeepSeek Harness", "ssh -N -L 3080:127.0.0.1:3080 duedil", "то же самое"],
+                [
+                    "Открыть DeepSeek Harness",
+                    "ssh -N -L 3080:127.0.0.1:3080 Hetzner",
+                    "то же самое",
+                ],
                 [
                     "Удалить всё, что относится к проекту",
                     r".\scripts\project.ps1 clean",
