@@ -29,6 +29,40 @@ The same workflow smoke-tests the image it just published: it starts it and wait
 release instead of reaching users. GitHub Packages storage and Actions minutes are free for
 public repositories, and the build cache is reused between runs.
 
+### Several developers on one server
+
+One checkout cannot serve two people: the compose project name, the host port and the working
+tree would all be shared. Each developer therefore gets their own clone, plus their own instance
+settings:
+
+```bash
+./scripts/project.sh instance auto        # -> duedil-agent-<user>, first free port
+./start.sh                                # prints the address, e.g. http://localhost:8502
+```
+
+`instance auto` writes `COMPOSE_PROJECT_NAME` and `DUEDIL_PORT` into `.env`, which namespaces the
+containers, the network and the data volume, and picks a free host port. Explicit names are always
+prefixed with `duedil-agent-`, so they cannot collide with an unrelated compose project on the same
+Docker host. `container_name` is deliberately absent from `docker-compose.yml` for the same reason.
+
+The published port binds to **`127.0.0.1` by default** (`DUEDIL_BIND`). Remote access goes through
+an SSH tunnel or VS Code's port forwarding; `DUEDIL_BIND=0.0.0.0` exposes it deliberately.
+
+### The files git does not carry
+
+`.env` (API keys) and `Run_Stop_Project.docx` (the personal guide) are gitignored on purpose, so
+`git pull` never moves them. `scripts/personal-sync.sh` covers that gap with plain `scp`, which
+exists on Linux, macOS and Windows 10+:
+
+```bash
+./scripts/personal-sync.sh status    # what differs, copies nothing
+./scripts/personal-sync.sh pull      # server -> this checkout
+./scripts/personal-sync.sh push      # this checkout -> server
+```
+
+Target overrides: `DUEDIL_SERVER`, `DUEDIL_USER`, `DUEDIL_REMOTE_DIR`. `pull` backs up an existing
+`.env` before overwriting it, and both commands leave `.env` at mode 600.
+
 ### Starting and stopping the local stack
 
 Nothing in this project starts by itself. Both compose services declare

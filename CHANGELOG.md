@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Per-developer instances**: `./scripts/project.sh instance [auto|<name> [port]]` writes
+  `COMPOSE_PROJECT_NAME` and `DUEDIL_PORT` into `.env`, so several developers can run the stack on
+  one server without sharing containers, volumes or ports. Names are always namespaced
+  (`duedil-agent-<name>`).
+- **`scripts/personal-sync.sh`** (`status` / `pull` / `push`): moves the gitignored personal files
+  (`.env`, `Run_Stop_Project.docx`) between the server and a laptop with plain `scp`, which works
+  from PowerShell, Git Bash, WSL, macOS and Linux.
+- **Extended Run & Stop guide** (13 sections): SSH keys for a new laptop, Dev Containers on the
+  server versus locally, several developers on one server, environment synchronisation, one
+  developer with several laptops, cloning plus personal files, DeepSeek Harness access through an
+  SSH tunnel, and a security chapter (fail2ban, ufw, secrets, auditing).
+
+
 - **Bundled example decks in the demo**: the sidebar's **📂 Browse examples/** button opens a
   dialog listing the five decks from `examples/` (`airbnb`, `uber`, `cursor`, `lovable`,
   `cognition`), so the hosted demo runs without the visitor having a PDF to hand. Picking a deck
@@ -24,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the figures. `tests/test_display.py` covers the formatting rules.
 
 ### Changed
+
+- **The published port binds to `127.0.0.1` by default** (`DUEDIL_BIND`): the app is no longer
+  reachable from the network unless someone asks for it with `DUEDIL_BIND=0.0.0.0`.
+- **`container_name` is gone** and the compose project name comes from
+  `${COMPOSE_PROJECT_NAME:-duedil-agent}`, which is what makes a second checkout on the same host
+  possible. The scripts resolve the container id from compose instead of assuming a name.
+
 
 - The demo screenshots and the offline walkthrough video were re-recorded against the new UI
   (22 s, example picker visible).

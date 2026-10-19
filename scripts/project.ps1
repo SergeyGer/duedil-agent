@@ -36,7 +36,6 @@ Set-Location $ProjectDir
 
 $ComposeFile  = Join-Path $ProjectDir "docker-compose.yml"
 $Image        = "duedil-agent:latest"
-$UiContainer  = "duedil-agent-ui"
 $Port         = if ($env:DUEDIL_PORT) { $env:DUEDIL_PORT } else { "8501" }
 
 function Write-Say  { param([string]$Text) Write-Host "==> " -ForegroundColor Blue -NoNewline; Write-Host $Text -ForegroundColor White }
@@ -62,6 +61,28 @@ function Assert-Docker {
     }
 }
 
+function Get-UiId {
+    # Compose names containers after the (per-developer) project, so look the id up.
+    $id = (& docker compose -f $ComposeFile ps -q ui 2>$null | Select-Object -First 1)
+    if ($id) { return $id.Trim() }
+    return ""
+}
+
+function Get-ProjectName {
+    $line = (& docker compose -f $ComposeFile config 2>$null | Select-String -Pattern '^name:\s*(.+)$' | Select-Object -First 1)
+    if ($line -and $line.Matches.Count -gt 0) { return $line.Matches[0].Groups[1].Value.Trim() }
+    return "duedil-agent"
+}
+
+function Get-FreePort {
+    param([int]$Start = 8501)
+    for ($port = $Start; $port -lt 8600; $port++) {
+        $inUse = (Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+        if (-not $inUse) { return $port }
+    }
+    return $Start
+}
+
 function Get-Port {
     $mapping = (& docker compose -f $ComposeFile port ui 8501 2>$null | Select-Object -First 1)
     if ($mapping -and $mapping -match ":(\d+)\s*$") { return $Matches[1] }
@@ -73,7 +94,8 @@ function Wait-ForHealth {
     $deadline = (Get-Date).AddMinutes(3)
     Write-Host "  waiting for the app to become healthy" -NoNewline
     while ((Get-Date) -lt $deadline) {
-        $state = (& docker inspect -f "{{.State.Health.Status}}" $UiContainer 2>$null)
+        $id = Get-UiId
+        $state = if ($id) { (& docker inspect -f "{{.State.Health.Status}}" $id 2>$null) } else { "missing" }
         switch ($state) {
             "healthy" {
                 Write-Host ""
@@ -105,18 +127,19 @@ function Stop-Project {
     Assert-Docker
     Write-Say "Stopping DueDil.Agent"
     Invoke-Compose down --remove-orphans
-    Write-Ok "containers removed; generated memos stay in the 'duedil-agent_duedil-data' volume"
+    Write-Ok "containers removed; generated memos stay in the '$(Get-ProjectName)_duedil-data' volume"
     Write-Host "  The port is free again — other projects on this machine are unaffected." -ForegroundColor DarkGray
 }
 
 function Show-Status {
     Assert-Docker
-    Write-Say "Project containers"
-    & docker ps -a --filter "label=com.docker.compose.project=duedil-agent" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    $exists = (& docker inspect $UiContainer 2>$null)
-    if ($LASTEXITCODE -eq 0 -and $exists) {
+    $name = Get-ProjectName
+    Write-Say "Instance $name"
+    & docker ps -a --filter "label=com.docker.compose.project=$name" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    $id = Get-UiId
+    if ($id) {
         Write-Say "Health"
-        & docker inspect -f "  state={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}} restart-policy={{.HostConfig.RestartPolicy.Name}}" $UiContainer
+        & docker inspect -f "  state={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}} restart-policy={{.HostConfig.RestartPolicy.Name}}" $id
         Write-Host "  url=http://localhost:$(Get-Port)"
     }
     else {
@@ -125,6 +148,51 @@ function Show-Status {
     Write-Say "Auto-start settings"
     Write-Host "  Docker Desktop starts with Windows only if you enabled it in its settings."
     Write-Host "  This project's containers never start by themselves (restart policy: no)."
+}
+
+function Set-Instance {
+    param([string]$Name, [string]$Port)
+    $envFile = Join-Path $ProjectDir ".env"
+
+    if (-not $Name) {
+        $current = Get-ProjectName
+        Write-Say "This checkout's instance"
+        Write-Host "  compose project : $current"
+        Write-Host "  host port       : $(Get-Port)"
+        Write-Host "  url when running: http://localhost:$(Get-Port)"
+        Write-Host "  Every developer on a shared server needs their own name and port:" -ForegroundColor DarkGray
+        Write-Host "  .\scripts\project.ps1 instance auto   # derive both from your username" -ForegroundColor DarkGray
+        return
+    }
+
+    if ($Name -eq "auto") {
+        $suffix = ($env:USERNAME -replace '[^A-Za-z0-9-]', '').ToLower()
+        $Name = "duedil-agent-$suffix"
+        $Port = [string](Get-FreePort 8501)
+    }
+    else {
+        $Name = ($Name -replace '[^A-Za-z0-9-]', '').ToLower()
+        if (-not $Port) { $Port = [string](Get-FreePort 8501) }
+    }
+
+    if (-not $Name) { Write-Die "the instance name must contain letters or digits" }
+    # Namespace the name: "alice" alone could collide with another compose project.
+    if ($Name -notlike "duedil-agent*") { $Name = "duedil-agent-$Name" }
+    if ($Port -notmatch '^\d+$') { Write-Die "the port must be a number, got '$Port'" }
+
+    Write-Say "Configuring this checkout as $Name on port $Port"
+    if (-not (Test-Path $envFile)) {
+        Write-Warn "no .env yet — copy it first: Copy-Item env.example .env"
+        "# Created by .\scripts\project.ps1 instance" | Set-Content -Path $envFile -Encoding utf8
+    }
+    $kept = Get-Content $envFile | Where-Object { $_ -notmatch '^(COMPOSE_PROJECT_NAME|DUEDIL_PORT)=' }
+    $kept += ""
+    $kept += "# --- dev instance: written by .\scripts\project.ps1 instance ---"
+    $kept += "COMPOSE_PROJECT_NAME=$Name"
+    $kept += "DUEDIL_PORT=$Port"
+    Set-Content -Path $envFile -Value $kept -Encoding utf8
+    Write-Ok "written to .env (kept out of git by .gitignore)"
+    Write-Host "  Next: .\scripts\project.ps1 start -> http://localhost:$Port" -ForegroundColor DarkGray
 }
 
 function Show-Usage {
@@ -148,6 +216,10 @@ function Show-Usage {
     Write-Host "  .\scripts\project.ps1 cli <deck> [url]     run the CLI once, in a throwaway container"
     Write-Host "  .\scripts\project.ps1 clean                remove containers, volumes and image"
     Write-Host ""
+    Write-Host "  .\scripts\project.ps1 instance             show this checkout's compose name and port"
+    Write-Host "  .\scripts\project.ps1 instance auto        derive both from your username (shared server)"
+    Write-Host "  .\scripts\project.ps1 instance <name> [port]   set them explicitly"
+    Write-Host ""
     Write-Host "The app is served at http://localhost:$Port while started."
     Write-Host "Nothing starts automatically — including after a reboot."
     Write-Host ""
@@ -168,6 +240,7 @@ switch ($Command.ToLower()) {
         if (-not $Rest -or $Rest.Count -eq 0) { Write-Die "usage: .\scripts\project.ps1 cli <deck.pdf> [url] [--out ...]" }
         Invoke-Compose run --rm cli @Rest
     }
+    "instance"  { Assert-Docker; Set-Instance -Name $Rest[0] -Port $Rest[1] }
     "clean"     {
         Assert-Docker
         Write-Say "Removing this project's containers, volumes and image"

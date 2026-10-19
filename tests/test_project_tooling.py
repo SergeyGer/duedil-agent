@@ -52,10 +52,49 @@ def test_services_never_start_by_themselves():
     assert not re.search(r"^\s+restart:\s*(always|unless-stopped)", text, re.MULTILINE)
 
 
-def test_compose_project_name_is_pinned():
-    """A fixed name keeps this stack's containers, network and volumes separate."""
+def test_compose_project_name_is_configurable_but_has_a_safe_default():
+    """Two developers on one server need different names; a lone user needs no setup."""
 
-    assert "name: duedil-agent" in _compose_text()
+    text = _compose_text()
+    assert "name: ${COMPOSE_PROJECT_NAME:-duedil-agent}" in text
+
+
+def test_the_host_port_is_per_instance():
+    """A fixed host port would make the second developer's stack unbootable."""
+
+    text = _compose_text()
+    assert "${DUEDIL_PORT:-8501}:8501" in text
+
+
+def test_the_published_port_binds_to_loopback_by_default():
+    """The app must not be reachable from the network until someone asks for it."""
+
+    assert "${DUEDIL_BIND:-127.0.0.1}" in _compose_text()
+
+
+def test_no_container_is_named_explicitly():
+    """`container_name` makes a second checkout fail with "name already in use"."""
+
+    assert "container_name:" not in _compose_text()
+
+
+def test_scripts_do_not_assume_a_container_name():
+    for script in (BASH, POWERSHELL):
+        text = script.read_text(encoding="utf-8")
+        assert "duedil-agent-ui" not in text, f"{script.name} hardcodes the container name"
+
+
+def test_personal_files_have_a_sync_script():
+    """`.env` and the guide are gitignored, so they need an explicit way to travel."""
+
+    sync = REPO_ROOT / "scripts" / "personal-sync.sh"
+    assert sync.is_file()
+    text = sync.read_text(encoding="utf-8")
+    assert ".env" in text
+    assert "Run_Stop_Project.docx" in text
+    assert "scp" in text, "it must say how the files actually move"
+    for command in ("pull", "push", "status"):
+        assert command in text
 
 
 def test_the_cli_service_stays_profile_gated():

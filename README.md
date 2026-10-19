@@ -203,15 +203,20 @@ configuration, deployment, design rationale and troubleshooting — lives in the
 ./stop.sh       # and this frees the machine again
 ```
 
-On Windows the same commands are `.\start.cmd` and `.\stop.cmd`. Nothing in this project
-starts by itself — the compose services use `restart: "no"`, so a reboot never brings the
+On Windows the same commands are `.\start.cmd` and `.\stop.cmd`. The published port binds to
+`127.0.0.1` by default — the app is reachable from the machine it runs on, through an SSH tunnel
+or VS Code port forwarding, not from the network. Two developers can work on one server: run
+`./scripts/project.sh instance auto` in each checkout to get a separate compose project and port.
+Nothing in this project starts by itself — the compose services use `restart: "no"`, so a reboot never brings the
 stack back on its own — and `./scripts/project.sh status` shows what is running.
 VS Code users can open the folder in a **dev container** (`.devcontainer/` is included),
 which builds the same image and serves the app on <http://localhost:8501>.
 
 See [Installation and Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment)
 for the full picture, and `Run_Stop_Project.docx` (generated locally by
-`make devcontainer-doc`, Russian; `make devcontainer-doc-en` for English; not committed) for a printable walkthrough.
+`make devcontainer-doc`, Russian; `make devcontainer-doc-en` for English; not committed), and
+`./scripts/personal-sync.sh` copies the gitignored personal files (`.env`, the guide) between the
+server and a laptop for a printable walkthrough.
 
 Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck used by
 the tests and the demo, its generated memo as Markdown and PDF, the full state JSON behind it —
