@@ -20,8 +20,6 @@ cd "$PROJECT_DIR"
 
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.yml"
 IMAGE="duedil-agent:latest"
-UI_CONTAINER="duedil-agent-ui"
-HEALTH_URL="http://127.0.0.1:${DUEDIL_PORT:-8501}/_stcore/health"
 
 # Colours only when attached to a terminal, so piping to a file stays readable.
 if [ -t 1 ]; then
@@ -49,12 +47,23 @@ port_of() {
     compose port ui 8501 2>/dev/null | awk -F: 'NF>1 {print $NF}' | head -1
 }
 
+ui_id() {
+    # No fixed container name: compose names it after the (per-developer) project, so the
+    # id is looked up instead of assumed.
+    compose ps -q ui 2>/dev/null | head -1
+}
+
+project_name() {
+    compose config 2>/dev/null | sed -n 's/^name: //p' | head -1
+}
+
 wait_for_health() {
     local port="${1:-8501}" deadline=$((SECONDS + 180))
     printf '  waiting for the app to become healthy'
     while [ "$SECONDS" -lt "$deadline" ]; do
-        local state
-        state="$(docker inspect -f '{{.State.Health.Status}}' "$UI_CONTAINER" 2>/dev/null || echo missing)"
+        local state id
+        id="$(ui_id)"
+        state="$(docker inspect -f '{{.State.Health.Status}}' "$id" 2>/dev/null || echo missing)"
         case "$state" in
             healthy) printf '\n'; ok "app is up: ${BOLD}http://localhost:${port}${RESET}"; return 0 ;;
             unhealthy) printf '\n'; die "the container reports unhealthy. Run: ./scripts/project.sh logs" ;;
@@ -80,20 +89,84 @@ cmd_stop() {
     require_docker
     say "Stopping DueDil.Agent"
     compose down --remove-orphans
-    ok "containers removed; generated memos stay in the 'duedil-agent_duedil-data' volume"
+    ok "containers removed; generated memos stay in the '$(project_name)_duedil-data' volume"
     printf '  %sThe port is free again — other projects on this machine are unaffected.%s\n' "$DIM" "$RESET"
 }
 
 cmd_restart() { cmd_stop; cmd_start; }
 
+free_port() {
+    local port="${1:-8501}"
+    while [ "$port" -lt 8600 ]; do
+        if ! (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -qE "[:.]${port}\b"; then
+            printf '%s' "$port"
+            return 0
+        fi
+        port=$((port + 1))
+    done
+    printf '%s' "$1"
+}
+
+cmd_instance() {
+    local name="${1:-}" port="${2:-}" env_file="$PROJECT_DIR/.env"
+    if [ -z "$name" ]; then
+        say "This checkout's instance"
+        printf '  compose project : %s\n' "$(project_name)"
+        printf '  host port       : %s\n' "$(port_of || printf '%s' "${DUEDIL_PORT:-8501}")"
+        printf '  url when running: http://localhost:%s\n' "$(port_of || printf '%s' "${DUEDIL_PORT:-8501}")"
+        printf '  %sEvery developer on a shared server needs their own name and port:%s\n' "$DIM" "$RESET"
+        printf '  %s./scripts/project.sh instance auto   # derive both from your username%s\n' "$DIM" "$RESET"
+        return 0
+    fi
+
+    if [ "$name" = "auto" ]; then
+        name="duedil-agent-$(whoami | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9-')"
+        port="$(free_port "${DUEDIL_PORT:-8501}")"
+    else
+        name="$(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -cd 'a-z0-9-')"
+        port="${port:-$(free_port "${DUEDIL_PORT:-8501}")}"
+    fi
+
+    # Namespace the name: "alice" alone could collide with an unrelated compose project
+    # on the same Docker host.
+    case "$name" in
+        duedil-agent*) : ;;
+        *) name="duedil-agent-${name}" ;;
+    esac
+
+    case "$name" in
+        ""|-*) die "the instance name must contain letters or digits" ;;
+    esac
+    case "$port" in
+        ""|*[!0-9]*) die "the port must be a number, got '$port'" ;;
+    esac
+
+    say "Configuring this checkout as ${BOLD}${name}${RESET} on port ${BOLD}${port}${RESET}"
+    if [ ! -f "$env_file" ]; then
+        warn "no .env yet — copy it first: cp env.example .env (it also holds the API keys)"
+        printf '# Created by ./scripts/project.sh instance\n' > "$env_file"
+    fi
+    # Drop the previous values, then append the current ones: compose reads .env itself.
+    grep -vE '^(COMPOSE_PROJECT_NAME|DUEDIL_PORT)=' "$env_file" > "$env_file.tmp" || true
+    mv "$env_file.tmp" "$env_file"
+    printf '\n# --- dev instance: written by ./scripts/project.sh instance ---\n' >> "$env_file"
+    printf 'COMPOSE_PROJECT_NAME=%s\nDUEDIL_PORT=%s\n' "$name" "$port" >> "$env_file"
+    chmod 600 "$env_file"
+    ok "written to .env (kept out of git by .gitignore)"
+    printf '  %sNext: ./scripts/project.sh start -> http://localhost:%s%s\n' "$DIM" "$port" "$RESET"
+}
+
 cmd_status() {
     require_docker
-    say "Project containers"
-    docker ps -a --filter "label=com.docker.compose.project=duedil-agent" \
+    local name id
+    name="$(project_name)"
+    say "Instance ${BOLD}${name}${RESET}"
+    docker ps -a --filter "label=com.docker.compose.project=${name}" \
         --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | sed 's/^/  /'
-    if docker inspect "$UI_CONTAINER" >/dev/null 2>&1; then
+    id="$(ui_id)"
+    if [ -n "$id" ] && docker inspect "$id" >/dev/null 2>&1; then
         say "Health"
-        docker inspect -f '  state={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}} restart-policy={{.HostConfig.RestartPolicy.Name}}' "$UI_CONTAINER"
+        docker inspect -f '  state={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}} restart-policy={{.HostConfig.RestartPolicy.Name}}' "$id"
         local port; port="$(port_of || true)"
         [ -n "${port:-}" ] && printf '  url=http://localhost:%s\n' "$port"
     else
@@ -181,6 +254,10 @@ ${BOLD}DueDil.Agent — container control${RESET}
   ./scripts/project.sh clean                remove containers, volumes and image
   ./scripts/project.sh autostart [on|off]   control the Docker daemon's boot behaviour
 
+  ./scripts/project.sh instance             show this checkout's compose name and port
+  ./scripts/project.sh instance auto        derive both from your username (shared server)
+  ./scripts/project.sh instance <name> [port]   set them explicitly
+
 The app is served at http://localhost:${DUEDIL_PORT:-8501} while started.
 Nothing starts automatically — including after a reboot.
 EOF
@@ -200,6 +277,7 @@ main() {
         shell)     cmd_shell "$@" ;;
         cli)       cmd_cli "$@" ;;
         clean)     cmd_clean "$@" ;;
+        instance)  cmd_instance "$@" ;;
         autostart) cmd_autostart "$@" ;;
         ""|-h|--help|help) usage ;;
         *) die "unknown command '$command' (try --help)" ;;

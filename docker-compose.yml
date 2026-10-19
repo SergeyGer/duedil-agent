@@ -23,7 +23,10 @@
 # /app/data, so the container writes memos with `duedil` ownership rather than
 # leaving root-owned files behind on the host.
 
-name: duedil-agent
+# The project name is what keeps two developers' stacks apart on the same server:
+# every developer sets their own in .env (./scripts/project.sh instance <name> <port>),
+# which also namespaces the containers, the network and the data volume.
+name: ${COMPOSE_PROJECT_NAME:-duedil-agent}
 
 services:
   ui:
@@ -31,14 +34,19 @@ services:
       context: .
       dockerfile: Dockerfile
     image: duedil-agent:latest
-    container_name: duedil-agent-ui
+    # No fixed `container_name`: it would make a second checkout on the same server
+    # fail with "name already in use". Compose names containers after the project.
     # `required: false` keeps the stack bootable without a .env (no LLM keys ->
     # pypdf parsing + deterministic fallback memo).
     env_file:
       - path: .env
         required: false
     ports:
-      - "8501:8501"
+      # Bound to loopback by default: the app is reachable from the machine it runs on
+      # (and through an SSH tunnel or VS Code port forwarding), not from the network.
+      # Host port is per-instance so several developers can run at once on one server.
+      # Deliberately expose it: DUEDIL_BIND=0.0.0.0 ./start.sh
+      - "${DUEDIL_BIND:-127.0.0.1}:${DUEDIL_PORT:-8501}:8501"
     volumes:
       # Named volume for generated reports/uploads: the container runs as a
       # non-root user, which cannot write into a root-owned bind mount.
