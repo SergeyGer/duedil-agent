@@ -28,6 +28,10 @@ updates:
       # Streamlit accepts pyarrow 26.
       - dependency-name: "pyarrow"
         versions: [">=26"]
+      # Streamlit 1.66 declares `pillow<13`, so a pillow 13 bump is uninstallable for the
+      # same reason as pyarrow above. Dependabot proposed it in the python group.
+      - dependency-name: "pillow"
+        versions: [">=13"]
 
   # Workflow actions are pinned to commit SHAs (with the release tag in a trailing
   # comment), so CodeQL's `actions/unpinned-tag` check stays quiet. Dependabot
