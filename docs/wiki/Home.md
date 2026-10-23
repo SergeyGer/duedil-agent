@@ -17,7 +17,7 @@ yourself in one line.
 | If you are… | Start with | Then |
 |---|---|---|
 | **A visitor** — you want to know what this is and whether it works | [Product Overview](Product-Overview) | the [live demo](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app), [Recipes](Recipes) |
-| **An engineer** — you will read, run or change the code | [Architecture](Architecture) | [Testing & Quality Gates](Testing-and-Quality-Gates), [Extending the System](Extending-the-System) |
+| **An engineer** — you will read, run or change the code | [Architecture](Architecture) | [Answer Quality & Guardrails](Answer-Quality), [Testing & Quality Gates](Testing-and-Quality-Gates) |
 | **An operator** — you deploy it, configure it or debug it | [Installation & Deployment](Installation-and-Deployment) | [Configuration](Configuration), [Troubleshooting](Troubleshooting) |
 
 ## Where to start
@@ -27,6 +27,7 @@ yourself in one line.
 | Understand what the product does | [Product Overview](Product-Overview) |
 | See how the agent graph is wired | [Architecture](Architecture) |
 | Know exactly how a Red Flag is raised | [Red-Flag Engine](Red-Flag-Engine) |
+| Understand how LLM answers are kept honest and how quality is measured | [Answer Quality & Guardrails](Answer-Quality) |
 | Run it locally or in Docker | [Installation & Deployment](Installation-and-Deployment) |
 | Configure models, parsers and tracing | [Configuration](Configuration) |
 | Call it from your own code | [Interfaces](Interfaces) |

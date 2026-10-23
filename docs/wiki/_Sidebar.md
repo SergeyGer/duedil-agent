@@ -11,6 +11,7 @@
 
 * [Architecture](Architecture)
 * [Red-Flag Engine](Red-Flag-Engine)
+* [Answer Quality & Guardrails](Answer-Quality)
 * [Design Decisions](Design-Decisions)
 * [Extending the System](Extending-the-System)
 

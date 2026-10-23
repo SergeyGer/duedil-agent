@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **[Answer Quality & Guardrails](docs/wiki/Answer-Quality.md)**: how the project decides whether
+  an LLM answer is trustworthy — the failure modes, the mechanism that catches each one, and the
+  exact place in the code (`app/graph.py:184` for the deterministic rules, `app/graph.py:62` for
+  tolerant JSON parsing, `app/graph.py:328` for the fallback memo, `app/prompts.py:14` for the
+  `[NOT_FOUND]` contract, and so on) — plus an honest note on what is *not* measured yet.
+  `tests/test_answer_quality_docs.py` fails when a cited line stops containing the cited symbol.
+
+
 - **Entry-point routing in the README**: a "Choose your path" table for the three readers —
   visitor, engineer, operator — a Mermaid diagram of the graph, and a documentation map that says
   which page answers which question.
