@@ -217,6 +217,7 @@ was last reviewed.
 | [Product Overview](https://github.com/SergeyGer/duedil-agent/wiki/Product-Overview) | you want the problem, the workflow and the outcome without code |
 | [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture) | you need the state machine, the node contracts and the termination proof |
 | [Red-Flag Engine](https://github.com/SergeyGer/duedil-agent/wiki/Red-Flag-Engine) | you want to know exactly which rule raises which flag |
+| [Answer Quality & Guardrails](https://github.com/SergeyGer/duedil-agent/wiki/Answer-Quality) | you are asking how LLM answers are verified and what stops a made-up figure |
 | [Recipes](https://github.com/SergeyGer/duedil-agent/wiki/Recipes) | you just need the command for a routine task |
 | [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment) | you are running it locally, in Docker, on a server or on Streamlit Cloud |
 | [Configuration](https://github.com/SergeyGer/duedil-agent/wiki/Configuration) | you are changing the model, the parser or tracing |

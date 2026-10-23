@@ -68,6 +68,7 @@ Commented-out entries in `env.example` are optional advanced switches.
 
 | Page | File |
 |---|---|
+| [Answer Quality and Guardrails](Answer-Quality) | Answer-Quality.md |
 | [Architecture](Architecture) | Architecture.md |
 | [Configuration](Configuration) | Configuration.md |
 | [Design Decisions](Design-Decisions) | Design-Decisions.md |
