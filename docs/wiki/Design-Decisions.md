@@ -108,9 +108,11 @@ change materially.
 **Decision:** the README answers "what is this and why should I care"; the wiki answers "how
 does it work and how do I operate it".
 
-**Why:** the two audiences need different depths. A recruiter or evaluator should reach the
+**Why:** the two audiences need different depths. A visitor or an evaluator should reach the
 demo and the outcome in seconds; an engineer or PM needs the state machine, the thresholds and
 the failure modes. Mixing them satisfies neither.
 
 **Cost:** two artefacts to keep in sync — mitigated by keeping the wiki sources in
 `docs/wiki/` and linking rather than duplicating.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

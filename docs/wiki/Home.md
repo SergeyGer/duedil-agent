@@ -5,9 +5,20 @@
 > algorithms, operations, testing and design rationale.
 
 **Repository:** [SergeyGer/duedil-agent](https://github.com/SergeyGer/duedil-agent) ·
-**Release:** v0.1.0 · **Python:** 3.11+ · **Tests:** 79 passing, 90.1 % line coverage of `app/`
+**Release:** v0.1.0 · **Python:** 3.11+ · **Tests:** 140 passing, 92 % line coverage of `app/`
 
 ---
+
+## Choose your path
+
+Different readers need different pages, and the fastest way into a wiki is to recognise
+yourself in one line.
+
+| If you are… | Start with | Then |
+|---|---|---|
+| **A visitor** — you want to know what this is and whether it works | [Product Overview](Product-Overview) | the [live demo](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app), [Recipes](Recipes) |
+| **An engineer** — you will read, run or change the code | [Architecture](Architecture) | [Testing & Quality Gates](Testing-and-Quality-Gates), [Extending the System](Extending-the-System) |
+| **An operator** — you deploy it, configure it or debug it | [Installation & Deployment](Installation-and-Deployment) | [Configuration](Configuration), [Troubleshooting](Troubleshooting) |
 
 ## Where to start
 
@@ -23,6 +34,9 @@
 | Know why a decision was made | [Design Decisions](Design-Decisions) |
 | Extend the graph or swap a node | [Extending the System](Extending-the-System) |
 | Understand the limits and the security posture | [Security & Limits](Security-and-Limits) |
+| Copy a command for a routine task | [Recipes](Recipes) |
+| Look up a term, a variable or a flag | [Glossary](Glossary), [Reference](Reference) |
+| Know why a decision was made | [Design Decisions](Design-Decisions), [ADRs](https://github.com/SergeyGer/duedil-agent/tree/main/docs/adr) |
 
 ---
 
@@ -49,3 +63,5 @@ docs/architecture.md            →  in-repo architecture notes (state, nodes, s
 The wiki sources are versioned in the repository under
 [`docs/wiki/`](https://github.com/SergeyGer/duedil-agent/tree/main/docs/wiki) so the technical
 documentation is reviewed like code; a small script publishes them here.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

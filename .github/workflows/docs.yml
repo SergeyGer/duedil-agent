@@ -1,0 +1,35 @@
+name: Docs
+
+# Documentation is checked like code: local links and anchors, ADR structure, wiki metadata,
+# the generated reference page. The job name is what the branch ruleset requires, so renaming
+# it also means updating the ruleset.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Docs · links + ADR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The validator is standard-library only on purpose, so it runs before the app
+      # dependencies (which take a minute and are irrelevant to documentation).
+      - name: Validate links, anchors, ADRs, wiki metadata and the generated reference
+        run: python scripts/validate_docs.py --verbose

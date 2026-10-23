@@ -90,3 +90,11 @@ devcontainer-doc: ## Regenerate Run_Stop_Project.docx in Russian (personal, not 
 
 devcontainer-doc-en: ## Same document in English
 	python scripts/make_run_stop_doc.py --lang en --out Run_Stop_Project_EN.docx
+
+# --- documentation ---------------------------------------------------------------
+.PHONY: docs-check wiki-reference
+docs-check: ## Validate links, anchors, ADRs, wiki metadata and the generated reference
+	python scripts/validate_docs.py --verbose
+
+wiki-reference: ## Regenerate docs/wiki/Reference.md from env.example, app/cli.py and scripts/
+	python scripts/make_wiki_reference.py

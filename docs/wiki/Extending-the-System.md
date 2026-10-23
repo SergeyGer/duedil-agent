@@ -118,3 +118,5 @@ renderer, expose it through the CLI flag set, and add a test that the output is 
 - [ ] Test added offline, no keys required.
 - [ ] `make lint`, `make test` clean; coverage stays above 88 %.
 - [ ] Wiki page updated if behaviour or a threshold changed.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

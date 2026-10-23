@@ -269,3 +269,5 @@ repository variable `PUBLISH_TO_PYPI=true`; no long-lived token is stored.
 | Data retention | Uploaded decks and memos live in `/app/data`; nothing is sent anywhere except the configured LLM, LlamaParse, Tavily and LangSmith endpoints. |
 | Cost control | Cost per run is bounded by the graph (`MAX_CRITIC_LOOPS = 2`); disable LangSmith tracing to avoid the extra span volume. |
 | Keys | Prefer a workspace-scoped service key for the app rather than a personal token — see [Configuration](Configuration). |
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*
