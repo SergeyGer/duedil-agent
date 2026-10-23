@@ -139,3 +139,5 @@ deck.pdf ──(parse_pdf_to_markdown)──► pitch_deck_raw
 | `app/streamlit_app.py` | ~25 | Docker entry point (`DUEDIL_MODE=ui` or `demo-ui`). |
 
 ≈1850 lines of application code, ≈800 lines of tests, ≈930 lines of tooling and demo scripts.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

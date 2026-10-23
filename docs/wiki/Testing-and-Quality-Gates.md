@@ -126,3 +126,5 @@ The reconstructions cover the interesting extremes on purpose: Lovable's disclos
 against ~146 employees sits far above the `$100k/employee` benchmark (a healthy verdict), Cursor
 and Cognition carry deliberate `[NOT_FOUND]` markers so the critic has gaps to report, and the
 Airbnb/Uber decks give the team-size rule a parseable headcount to contradict.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

@@ -20,6 +20,18 @@
 **▶ [Try the live demo](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app)** — the real UI
 in a browser, no installation and no API keys.
 
+---
+
+## Choose your path
+
+| If you are… | You need | Start here |
+|---|---|---|
+| **A visitor** — deciding whether this is worth 5 minutes | nothing installed | [See it work](#see-it-work) · [the live demo](https://duedil-agent-cnrm2wvfew6nstsu2tpsvh.streamlit.app) · [Product Overview](https://github.com/SergeyGer/duedil-agent/wiki/Product-Overview) |
+| **An engineer** — reading, running or changing the code | Python 3.11+ or Docker | [Run it locally](#run-it-locally) · [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture) · [Testing & Quality Gates](https://github.com/SergeyGer/duedil-agent/wiki/Testing-and-Quality-Gates) |
+| **An operator** — deploying, configuring or debugging it | Docker, a server or a cloud account | [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment) · [Configuration](https://github.com/SergeyGer/duedil-agent/wiki/Configuration) · [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) |
+
+Everything below is written for those three readers in that order: what it does, how to run it,
+how it is built.
 
 ---
 
@@ -163,9 +175,19 @@ terminates. Red Flags come from two independent sources — an LLM critic and de
 heuristics — so an obvious contradiction is caught even on a bad model day. Every external
 dependency (model, PDF parser, web search) is optional and degrades gracefully.
 
+```mermaid
+flowchart LR
+    D["Pitch deck PDF"] --> E["Extractor<br/>claims + metrics"]
+    E --> S["Scraper<br/>Tavily search"]
+    S --> F["Financial<br/>ARR per employee"]
+    F --> C{"Critic<br/>LLM + rules"}
+    C -- "Red Flags" --> S
+    C --> V["Supervisor<br/>deal memo"]
+    V --> M["Memo<br/>INVEST / DEEP AUDIT / REJECT"]
 ```
-deck.pdf → Extractor → Scraper → Financial → Critic ⇄ Scraper (≤ 2 passes) → Supervisor → memo
-```
+
+The Critic can send the graph back to the Scraper for one targeted re-verification; the loop is
+hard-capped at two passes, so every run terminates.
 
 | | |
 |---|---|
@@ -184,39 +206,57 @@ configuration, deployment, design rationale and troubleshooting — lives in the
 
 ---
 
-## Where to go next
+## Documentation map
 
-| I want to… | Go to |
+The README is the landing page; the **[wiki](https://github.com/SergeyGer/duedil-agent/wiki)** is
+the reference. Read a page when the question matches it — every page states its owner and when it
+was last reviewed.
+
+| Page | Read it when… |
 |---|---|
-| Understand the product and its value | [Product Overview](https://github.com/SergeyGer/duedil-agent/wiki/Product-Overview) |
-| Review the architecture and state machine | [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture) |
-| See exactly how a Red Flag is raised | [Red-Flag Engine](https://github.com/SergeyGer/duedil-agent/wiki/Red-Flag-Engine) |
-| Run, deploy or extend it | [Installation](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment) · [Configuration](https://github.com/SergeyGer/duedil-agent/wiki/Configuration) · [Extending](https://github.com/SergeyGer/duedil-agent/wiki/Extending-the-System) |
-| Read the quality and security posture | [Testing & Quality Gates](https://github.com/SergeyGer/duedil-agent/wiki/Testing-and-Quality-Gates) · [Security & Limits](https://github.com/SergeyGer/duedil-agent/wiki/Security-and-Limits) |
-| Understand the trade-offs | [Design Decisions](https://github.com/SergeyGer/duedil-agent/wiki/Design-Decisions) |
-| Fix something that broke | [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) |
+| [Product Overview](https://github.com/SergeyGer/duedil-agent/wiki/Product-Overview) | you want the problem, the workflow and the outcome without code |
+| [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture) | you need the state machine, the node contracts and the termination proof |
+| [Red-Flag Engine](https://github.com/SergeyGer/duedil-agent/wiki/Red-Flag-Engine) | you want to know exactly which rule raises which flag |
+| [Recipes](https://github.com/SergeyGer/duedil-agent/wiki/Recipes) | you just need the command for a routine task |
+| [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment) | you are running it locally, in Docker, on a server or on Streamlit Cloud |
+| [Configuration](https://github.com/SergeyGer/duedil-agent/wiki/Configuration) | you are changing the model, the parser or tracing |
+| [Interfaces](https://github.com/SergeyGer/duedil-agent/wiki/Interfaces) | you are calling it from Python or integrating it |
+| [Testing & Quality Gates](https://github.com/SergeyGer/duedil-agent/wiki/Testing-and-Quality-Gates) | you want to know what CI enforces and why |
+| [Troubleshooting](https://github.com/SergeyGer/duedil-agent/wiki/Troubleshooting) | something failed and you want the cause, not a guess |
+| [Design Decisions](https://github.com/SergeyGer/duedil-agent/wiki/Design-Decisions) · [ADRs](docs/adr/README.md) | you are asking "why is it built this way?" |
+| [Security & Limits](https://github.com/SergeyGer/duedil-agent/wiki/Security-and-Limits) | you are assessing the risk, the data flow or the threat model |
+| [Reference](https://github.com/SergeyGer/duedil-agent/wiki/Reference) · [Glossary](https://github.com/SergeyGer/duedil-agent/wiki/Glossary) | you need a variable, a flag or a term |
+| [Changelog](CHANGELOG.md) · [Versioning](docs/VERSIONING.md) · [Owners](docs/OWNERS.md) | you are releasing, upgrading or looking for the right reviewer |
 
 ## Run it locally
 
 ```bash
-./start.sh      # Linux/macOS/WSL: build if needed, start, wait until healthy
-./stop.sh       # and this frees the machine again
+./start.sh      # Linux/macOS/WSL — or .\start.cmd on Windows
+./stop.sh       # frees the port again
 ```
 
-On Windows the same commands are `.\start.cmd` and `.\stop.cmd`. The published port binds to
-`127.0.0.1` by default — the app is reachable from the machine it runs on, through an SSH tunnel
-or VS Code port forwarding, not from the network. Two developers can work on one server: run
-`./scripts/project.sh instance auto` in each checkout to get a separate compose project and port.
-Nothing in this project starts by itself — the compose services use `restart: "no"`, so a reboot never brings the
-stack back on its own — and `./scripts/project.sh status` shows what is running.
-VS Code users can open the folder in a **dev container** (`.devcontainer/` is included),
-which builds the same image and serves the app on <http://localhost:8501>.
+That is the whole quick start: it builds if needed, waits until the app answers and prints the
+address (<http://localhost:8501>). The port binds to `127.0.0.1`, nothing starts by itself after a
+reboot, and `./scripts/project.sh status` shows what is running. Developers who prefer VS Code can
+**Reopen in Container** (`.devcontainer/` is included) and work inside the same image.
 
-See [Installation and Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment)
-for the full picture, and `Run_Stop_Project.docx` (generated locally by
-`make devcontainer-doc`, Russian; `make devcontainer-doc-en` for English; not committed), and
-`./scripts/personal-sync.sh` copies the gitignored personal files (`.env`, the guide) between the
-server and a laptop for a printable walkthrough.
+<details>
+<summary>More options — API keys, own port on a shared server, dev container, CLI</summary>
+
+* **API keys** — `cp env.example .env` and fill it in; without keys the app runs its rule-based
+  offline agents and says so on screen.
+* **A second checkout on one server** — `./scripts/project.sh instance auto` gives this checkout
+  its own compose project and a free port.
+* **Container workflow** — `./scripts/project.sh {start,stop,logs,shell,rebuild,clean}`.
+* **CLI** — `./scripts/project.sh cli examples/cursor_deck.pdf https://cursor.com`.
+* **Without Docker** — `make run`; `make demo` runs the offline pipeline with no keys at all.
+* **The personal Run & Stop guide** — `make devcontainer-doc` (Russian) or
+  `make devcontainer-doc-en`; the file is gitignored, and `./scripts/personal-sync.sh` copies it
+  and your `.env` between the server and a laptop.
+
+Full detail: [Installation & Deployment](https://github.com/SergeyGer/duedil-agent/wiki/Installation-and-Deployment).
+
+</details>
 
 Ready-made inputs and outputs live in [`examples/`](examples): the synthetic pitch deck used by
 the tests and the demo, its generated memo as Markdown and PDF, the full state JSON behind it —

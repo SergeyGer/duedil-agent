@@ -4,7 +4,8 @@ DueDil.Agent is a five-node [LangGraph](https://github.com/langchain-ai/langgrap
 with a bounded critic feedback loop. Every node reads and writes a single typed state object
 (`VentureState`); nodes never call each other directly.
 
-> For the high-level overview see the [README](../README.md#architecture).
+> For the high-level overview see [Under the hood](https://github.com/SergeyGer/duedil-agent#under-the-hood-briefly)
+> in the README, and the wiki [Architecture](https://github.com/SergeyGer/duedil-agent/wiki/Architecture).
 
 ## High-level flow
 
@@ -287,7 +288,7 @@ flowchart TD
 - **PyPI publishing is opt-in.** The `publish-pypi` job only runs when the repository variable
   `PUBLISH_TO_PYPI` is `true`; it authenticates via OIDC (`id-token: write`) and a GitHub
   Environment named `pypi`, so no long-lived token is stored. See
-  [Releasing](../README.md#releasing).
+  [Versioning](VERSIONING.md).
 
 ### Dependency updates
 
