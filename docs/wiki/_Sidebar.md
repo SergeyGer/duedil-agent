@@ -1,32 +1,38 @@
 ### DueDil.Agent — Engineering Wiki
 
-**Start here**
+**Start**
 
 * [Home](Home)
 * [Product Overview](Product-Overview)
+* [Recipes](Recipes)
+* [Glossary](Glossary)
 
-**Architecture**
+**How it works**
 
 * [Architecture](Architecture)
 * [Red-Flag Engine](Red-Flag-Engine)
+* [Design Decisions](Design-Decisions)
 * [Extending the System](Extending-the-System)
 
-**Operations**
+**Operate**
 
 * [Installation & Deployment](Installation-and-Deployment)
 * [Configuration](Configuration)
-* [Interfaces](Interfaces)
 * [Testing & Quality Gates](Testing-and-Quality-Gates)
+* [Troubleshooting](Troubleshooting)
 
 **Reference**
 
-* [Design Decisions](Design-Decisions)
+* [Reference](Reference)
+* [Interfaces](Interfaces)
 * [Security & Limits](Security-and-Limits)
-* [Troubleshooting](Troubleshooting)
+* [ADRs](https://github.com/SergeyGer/duedil-agent/tree/main/docs/adr)
+* [Versioning](https://github.com/SergeyGer/duedil-agent/blob/main/docs/VERSIONING.md)
+* [Ownership](https://github.com/SergeyGer/duedil-agent/blob/main/docs/OWNERS.md)
 
 **Project**
 
 * [Repository README](https://github.com/SergeyGer/duedil-agent#readme)
 * [Changelog](https://github.com/SergeyGer/duedil-agent/blob/main/CHANGELOG.md)
-* [Release v0.1.0](https://github.com/SergeyGer/duedil-agent/releases)
+* [Releases](https://github.com/SergeyGer/duedil-agent/releases)
 * [Code scanning](https://github.com/SergeyGer/duedil-agent/security/code-scanning)

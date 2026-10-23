@@ -253,3 +253,5 @@ badge PR manually — it only touches `docs/…/coverage.svg`.
 
 When reporting an application bug, attach the `progress_log` from the state JSON — it records
 which node failed and why, which usually identifies the cause immediately.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

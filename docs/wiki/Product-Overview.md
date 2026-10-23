@@ -93,3 +93,5 @@ Two documented runs ship with the repository (see the [README demo section](http
 The offline run exists so the pipeline can be demonstrated, recorded and regression-checked
 without spending tokens or depending on the network. It stubs exactly two boundaries — the LLM
 and the search tool — and runs every other line of production code.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

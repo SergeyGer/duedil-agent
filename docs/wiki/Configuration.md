@@ -101,3 +101,5 @@ supported as aliases, so both work and the repository documents both.
 
 These are the levers to tune first for a new sector or a different risk appetite; each is
 covered by tests, so changing one is a deliberate, reviewable act.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*
