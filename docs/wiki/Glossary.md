@@ -22,3 +22,5 @@ here in the same PR that introduces it.
 | **Offline agents** | Deterministic replacements for the LLM nodes, used when no API key is configured (the hosted demo). They read the deck by rule and say so in the memo. |
 | **Dev container** | The VS Code container defined in `.devcontainer/`, attached to the compose service `ui`. |
 | **Instance** | One checkout's compose project: name, host port and data volume. Lets several developers run on one server. |
+
+[probe broken link](No-Such-Page)
