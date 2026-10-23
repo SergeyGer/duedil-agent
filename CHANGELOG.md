@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Entry-point routing in the README**: a "Choose your path" table for the three readers —
+  visitor, engineer, operator — a Mermaid diagram of the graph, and a documentation map that says
+  which page answers which question.
+- **Docs as code**: `scripts/validate_docs.py` (standard library only) checks local links and
+  anchors, ADR structure, wiki metadata, the generated reference page and the project's wording
+  rules; the `Docs · links + ADR` workflow runs it on every push and pull request, and the test
+  suite runs the same validator.
+- **ADRs**: `docs/adr/` with four backfilled decisions (five-node pipeline, hybrid Red-Flag
+  engine, `[NOT_FOUND]` contract, container/network posture) plus `docs/VERSIONING.md` and
+  `docs/OWNERS.md`.
+- **Wiki restructured for findability**: a four-block sidebar (Start / How it works / Operate /
+  Reference), new [Recipes](docs/wiki/Recipes.md) and [Glossary](docs/wiki/Glossary.md) pages, and
+  a [Reference](docs/wiki/Reference.md) page generated from `env.example`, `app/cli.py` and
+  `scripts/` by `scripts/make_wiki_reference.py` (`make wiki-reference`). Every page now states its
+  owner and when it was last reviewed.
+
+
 - **Per-developer instances**: `./scripts/project.sh instance [auto|<name> [port]]` writes
   `COMPOSE_PROJECT_NAME` and `DUEDIL_PORT` into `.env`, so several developers can run the stack on
   one server without sharing containers, volumes or ports. Names are always namespaced

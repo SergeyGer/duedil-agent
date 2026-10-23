@@ -174,3 +174,5 @@ Shipped examples: [`examples/sample_memo.pdf`](https://github.com/SergeyGer/dued
 [`sample_memo.md`](https://github.com/SergeyGer/duedil-agent/blob/main/examples/sample_memo.md),
 [`sample_memo.json`](https://github.com/SergeyGer/duedil-agent/blob/main/examples/sample_memo.json),
 plus `sample_offline_run.json` (the canned external responses used by the offline demo).
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*

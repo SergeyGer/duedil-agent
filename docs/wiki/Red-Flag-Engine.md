@@ -146,3 +146,5 @@ was handed.
 
 The rules are pure functions over the state, so they need no network, no keys and no model —
 which is exactly why they are trusted when the model is not.
+
+*Last reviewed: 2026-10-23 · Owner: [@SergeyGer](https://github.com/SergeyGer)*
