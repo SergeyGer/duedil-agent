@@ -108,8 +108,6 @@ def test_package_version_matches_pyproject():
     same drift earlier, and also covers `app/__init__.py`, which is what `--version` prints.
     """
 
-    import tomllib
-
     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     declared = pyproject["project"]["version"]
 
