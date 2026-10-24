@@ -97,6 +97,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   name `duedil-agent`. Verified by restarting the Docker daemon with the stack up: the
   container stays `Exited (0)`. Stopping frees port 8501; the data volume is kept.
 
+### Security
+
+- **`pillow` 12.3.0 → 13.0.0**: 41 open Dependabot advisories against the pinned version were
+  only fixed in 13.0.0 (heap overflows in JPEG/TIFF decoding, Ghostscript argument injection,
+  several denial-of-service paths). `streamlit` 1.66.0 pinned `pillow<13`, so the ceiling was
+  blocking the fix; **`streamlit` 1.66.1** relaxes it to `pillow<14`, which makes the upgrade
+  possible. The Dependabot ignore rule that kept `pillow` at 12.x is removed.
+- **`pypdf` 6.21.1 → 6.21.2**: three high-severity advisories about long runtimes on malformed
+  cross-reference tables and repeated missing objects.
+
 ### Fixed
 
 - **The hosted demo no longer answers the same thing for every deck.** Without API keys
