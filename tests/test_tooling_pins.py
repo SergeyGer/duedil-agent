@@ -99,3 +99,22 @@ def test_markdown_is_excluded_from_ruff():
     # docs/architecture.md, undoing their deliberate column alignment.
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     assert "*.md" in data["tool"]["ruff"]["extend-exclude"]
+
+
+def test_package_version_matches_pyproject():
+    """The tag, the package metadata and `duedil --version` must agree.
+
+    The Release workflow refuses a tag that differs from `pyproject.toml`; this test catches the
+    same drift earlier, and also covers `app/__init__.py`, which is what `--version` prints.
+    """
+
+    import tomllib
+
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    declared = pyproject["project"]["version"]
+
+    from app import __version__
+
+    assert __version__ == declared, (
+        f"app/__init__.py says {__version__!r} but pyproject.toml says {declared!r}"
+    )
