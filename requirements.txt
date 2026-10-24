@@ -13,7 +13,7 @@ aiosignal==1.4.0
 aiosqlite==0.22.1
 altair==6.3.0
 annotated-types==0.8.0
-anthropic==1.15.0
+anthropic==1.17.0
 anyio==4.15.1
 attrs==26.1.0
 banks==2.5.1
@@ -53,7 +53,7 @@ jsonpatch==1.36
 jsonpointer==3.4
 jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
-langchain==1.4.6
+langchain==1.4.7
 langchain-anthropic==1.7.6
 langchain-classic==1.0.8
 langchain-community==0.4.2
