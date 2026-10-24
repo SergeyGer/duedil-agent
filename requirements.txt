@@ -90,6 +90,8 @@ orjson==3.13.0
 ormsgpack==1.13.0
 packaging==26.3
 pandas==3.0.6
+# pillow 12.x carries 41 advisories that are fixed only in 13.0.0; Streamlit 1.66.1
+# lifted its `pillow<13` bound to `pillow<14`, which is what makes this upgrade possible.
 pillow==13.0.0
 platformdirs==4.13.5
 pluggy==1.7.0
@@ -101,6 +103,7 @@ pydantic-settings==2.16.1
 pydantic_core==2.50.1
 pydeck==0.9.3
 Pygments==2.21.0
+# 6.21.2 fixes three high-severity advisories (long runtimes on malformed PDFs).
 pypdf==6.21.2
 pytest==9.1.1
 pytest-cov==7.1.0
