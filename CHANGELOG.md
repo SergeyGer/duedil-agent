@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.2.1] - 2026-10-24
+
+### Changed
+
+- Routine dependency refresh: `langchain-core` 1.6.13, `langsmith` 0.14.12, `nltk` 3.10.4,
+  `httpcore2`/`httpx2` 2.16.0 and the rest of the grouped bump. `anthropic` stays at 1.15.0:
+  `langchain-anthropic 1.7.6` requires `anthropic<2.0.0`, so the major is blocked in
+  `.github/dependabot.yml` until the integration supports it.
+- Grouped action bumps (`actions/setup-python`, `github/codeql-action`, the coverage, release and
+  docs workflows), with the Docs workflow's actions pinned by commit SHA like every other workflow.
+- `requirements.txt` explains the two security pins inline (`pillow==13.0.0`, `pypdf==6.21.2`).
+
 ## [0.2.0] - 2026-10-23
 
 ### Added
@@ -197,6 +211,7 @@ First public release.
   `langchain-community` deprecation warning).
 - Replaced the Codecov upload with a self-contained coverage-badge workflow.
 
-[Unreleased]: https://github.com/SergeyGer/duedil-agent/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SergeyGer/duedil-agent/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/SergeyGer/duedil-agent/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/SergeyGer/duedil-agent/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/SergeyGer/duedil-agent/releases/tag/v0.1.0
