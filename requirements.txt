@@ -13,7 +13,7 @@ aiosignal==1.4.0
 aiosqlite==0.22.1
 altair==6.3.0
 annotated-types==0.8.0
-anthropic==1.15.0
+anthropic==1.17.0
 anyio==4.15.1
 attrs==26.1.0
 banks==2.5.1
