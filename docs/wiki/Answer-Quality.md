@@ -95,7 +95,8 @@ weaker.
 **What is *not* measured yet:** there is no automated LLM-as-judge evaluation of memo quality, and
 no golden-memo regression corpus. Quality today is enforced by contracts, deterministic
 cross-checks and tests — not by scoring the prose. This is the honest gap, and it is on the
-roadmap as *"an evaluation harness with golden memos to track analysis quality over time"*.
+roadmap as *"an evaluation harness with golden memos to track analysis quality over time"* —
+[issue #83](https://github.com/SergeyGer/duedil-agent/issues/83).
 
 ## If you change a prompt or a rule
 
