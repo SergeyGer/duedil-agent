@@ -61,7 +61,18 @@ jobs:
 
           git checkout -B chore/coverage-badge
           git add -f .github/badges/coverage.svg
-          git diff --cached --quiet || git commit -m "chore: update coverage badge [skip ci]"
+
+          # When the badge is already current, every push to main used to leave a stray
+          # `chore/coverage-badge` branch pointing at the same commit: the branch was pushed
+          # unconditionally, then `gh pr create` failed with "No commits between ...". Stop
+          # before pushing, and remove a branch left behind by an earlier run.
+          if git diff --cached --quiet; then
+            echo "Coverage badge is already current - nothing to publish."
+            git push origin --delete chore/coverage-badge 2>/dev/null || true
+            exit 0
+          fi
+
+          git commit -m "chore: update coverage badge [skip ci]"
           git push --force origin chore/coverage-badge
 
           if ! gh pr view chore/coverage-badge >/dev/null 2>&1; then
