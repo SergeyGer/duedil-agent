@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The coverage-badge workflow no longer pushes `chore/coverage-badge` when the badge is already
+  current. It used to create a branch pointing at the same commit as `main` on every push, then
+  fail to open a pull request ("No commits between …"), leaving a stray branch behind.
+
 ## [0.2.1] - 2026-10-24
 
 ### Changed
