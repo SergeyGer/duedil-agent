@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The README roadmap and the wiki's extension notes now link to the GitHub issues that track
+  them (#79–#88), so the plan and the tracker cannot drift apart.
+
 ### Fixed
 
 - The coverage-badge workflow no longer pushes `chore/coverage-badge` when the badge is already

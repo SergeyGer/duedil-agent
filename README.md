@@ -270,11 +270,24 @@ prints its sources on its last page.
 
 ## Roadmap
 
-- [ ] Parallel competitor and founder scraping (the three searches are independent today)
-- [ ] Per-sector financial benchmarks instead of a single SaaS norm
-- [ ] Caching of search results across runs
-- [ ] Multi-deck batch mode with a portfolio-level summary
-- [ ] An evaluation harness with golden memos to track analysis quality over time
+Work is tracked in [Issues](https://github.com/SergeyGer/duedil-agent/issues) — the list below is
+the roadmap those issues were opened from, in the order the project needs them.
+
+| Planned | Issue | Why |
+|---|---|---|
+| Parallel competitor and founder scraping | [#79](https://github.com/SergeyGer/duedil-agent/issues/79) | the three searches are independent today |
+| Per-sector financial benchmarks | [#80](https://github.com/SergeyGer/duedil-agent/issues/80) | one SaaS norm is applied to every deck |
+| Caching of search results across runs | [#81](https://github.com/SergeyGer/duedil-agent/issues/81) | re-runs pay for the same queries |
+| Multi-deck batch mode with a portfolio summary | [#82](https://github.com/SergeyGer/duedil-agent/issues/82) | comparisons are the actual decision |
+| An evaluation harness with golden memos | [#83](https://github.com/SergeyGer/duedil-agent/issues/83) | prompt changes are judged by eye today |
+| DOCX export for the memo | [#84](https://github.com/SergeyGer/duedil-agent/issues/84) | partners comment in Word, not PDF |
+| Another interface language | [#85](https://github.com/SergeyGer/duedil-agent/issues/85) | a good first contribution |
+
+Three proposals that would set the project apart from other public due-diligence agents are
+tracked as [#86](https://github.com/SergeyGer/duedil-agent/issues/86) (run it as a GitHub Action),
+[#87](https://github.com/SergeyGer/duedil-agent/issues/87) (evidence-linked Red Flags) and
+[#88](https://github.com/SergeyGer/duedil-agent/issues/88) (a self-contained HTML report with a
+run ledger).
 
 ---
 
