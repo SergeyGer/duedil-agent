@@ -170,8 +170,20 @@ EN_FALLBACK: dict[str, str] = {
         "verification."
     ),
     "value_1_title": "Deck in, memo out",
+    "value_1_text": (
+        "A six-section investment memo with a recommendation — readable on screen, "
+        "downloadable as a PDF."
+    ),
     "value_2_title": "Numbers, benchmarked",
+    "value_2_text": (
+        "Revenue, team size and revenue per employee are compared with a market norm, and the "
+        "gap is stated plainly."
+    ),
     "value_3_title": "Risks, not vibes",
+    "value_3_text": (
+        "Every red flag says what is wrong and why: a claim that contradicts public data, a "
+        "figure the deck never states, a missing metric."
+    ),
     "how_header": "How it works",
     "how_steps": (
         "1. Upload the pitch deck and the company website.\n"

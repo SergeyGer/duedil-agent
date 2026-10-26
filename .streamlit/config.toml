@@ -7,3 +7,8 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+
+# The uploader promises "200MB per file"; make that the server's own limit instead of relying
+# on the default, so the UI and the server agree.
+[server]
+maxUploadSize = 200
