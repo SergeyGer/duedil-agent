@@ -52,4 +52,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: gh pr comment "$PR_NUMBER" --body-file "${{ steps.duedil.outputs.comment }}"
+        run: |
+          # Update the comment this workflow posted last time instead of adding another copy on
+          # every push; `--edit-last` edits the most recent comment by the same author.
+          gh pr comment "$PR_NUMBER" --edit-last --body-file "${{ steps.duedil.outputs.comment }}" \
+            || gh pr comment "$PR_NUMBER" --body-file "${{ steps.duedil.outputs.comment }}"

@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_comment.py` and `tests/test_github_action.py` pin the summary format, the action's
   interface (inputs, outputs, SHA-pinned `uses`) and the workflows that demonstrate it.
 
+### Security
+
+- Every artefact the CLI writes now passes through `app/redact.py`: credential-shaped strings
+  (`sk-…`, `lsv2_…`, `tvly-…`, `llx-…`, `ghp_…`) are replaced with `[REDACTED]` in the Markdown
+  memo, the PDF, the JSON state and the pull-request summary, so a provider error quoted into the
+  memo cannot leak a key into a build artifact. The model label — which comes from an environment
+  variable — is validated before it is written.
+
 ### Changed
 
 - The README roadmap and the wiki's extension notes now link to the GitHub issues that track

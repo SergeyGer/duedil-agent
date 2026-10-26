@@ -28,6 +28,7 @@ from app.comment import build_comment
 from app.config import model_label
 from app.graph import build_graph
 from app.parser import ParserError, parse_pdf_to_markdown
+from app.redact import redact_secrets, redact_state
 from app.report import markdown_to_pdf
 from app.state import initial_state
 
@@ -179,16 +180,23 @@ def main(argv: list[str] | None = None) -> int:
     # `.gitattributes` (`eol=lf`) and the pre-commit `mixed-line-ending` hook.
     if args.md_out:
         Path(args.md_out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.md_out).write_text(memo, encoding="utf-8", newline="\n")
+        Path(args.md_out).write_text(redact_secrets(memo), encoding="utf-8", newline="\n")
 
     if args.comment_out:
         Path(args.comment_out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.comment_out).write_text(build_comment(state), encoding="utf-8", newline="\n")
+        # The summary is a fixed template over deck-derived values; the model label is validated
+        # and credential shapes are redacted, so no key can reach this file.
+        comment_text = redact_secrets(build_comment(state))
+        Path(args.comment_out).write_text(  # lgtm[py/clear-text-storage-sensitive-data]
+            comment_text, encoding="utf-8", newline="\n"
+        )
 
     if args.json_out:
         Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(
-            json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n"
+            json.dumps(redact_state(state), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+            newline="\n",
         )
 
     if args.quiet:

@@ -113,6 +113,9 @@ def build_comment(state: dict[str, Any]) -> str:
     model = safe_model_label(state.get("used_model"))
 
     lines = [
+        # Hidden marker: the workflows use it to find and update their own comment instead of
+        # posting a new one on every run.
+        "<!-- duedil-agent:summary -->",
         f"### Due diligence — {company}",
         "",
         f"**{recommendation}** · {len(flags)} Red Flag{'s' if len(flags) != 1 else ''} · {model}",
