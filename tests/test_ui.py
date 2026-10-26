@@ -119,3 +119,14 @@ def test_first_screen_speaks_to_an_investor_not_to_an_engineer():
 
     assert "due diligence" in visible.lower()
     assert "memo" in visible.lower()
+
+
+def test_the_fallback_copy_matches_the_english_table():
+    """The in-module fallback exists for a stale translation table, and must not drift."""
+
+    from app.i18n import TRANSLATIONS
+    from app.ui import EN_FALLBACK
+
+    for key, value in EN_FALLBACK.items():
+        assert key in TRANSLATIONS["en"], f"{key} is not a real translation key"
+        assert TRANSLATIONS["en"][key] == value, f"{key} drifted from the English table"
