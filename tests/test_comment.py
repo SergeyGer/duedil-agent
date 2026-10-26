@@ -118,3 +118,18 @@ def test_build_comment_marks_offline_runs():
 def test_build_comment_escapes_pipes_in_values():
     state = {**STATE, "extracted_metrics": {"company_name": "A | B"}}
     assert "A \\| B" in build_comment(state)
+
+
+def test_model_label_is_validated_before_it_reaches_the_comment():
+    """The label comes from `DUE_DIL_MODEL`; an odd value must not be written verbatim."""
+
+    from app.comment import safe_model_label
+
+    assert safe_model_label("gpt-4o (OpenAI)") == "gpt-4o (OpenAI)"
+    assert (
+        safe_model_label("offline rules, deck_aware (no model)")
+        == "offline rules, deck_aware (no model)"
+    )
+    assert safe_model_label("sk-1234567890abcdef") == "unknown"
+    assert safe_model_label("x" * 200) == "unknown"
+    assert safe_model_label("") == "unknown"

@@ -66,8 +66,10 @@ runs:
       uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7
       with:
         python-version: ${{ inputs.python-version }}
-        cache: pip
-        cache-dependency-path: ${{ github.action_path }}/requirements.txt
+        # No `cache:` here on purpose: `cache-dependency-path` does not accept
+        # `github.action_path` (for a local `uses: ./` it becomes `.//requirements.txt`, which
+        # setup-python rejects). Callers that want caching can enable it in their own workflow,
+        # where the dependency path is unambiguous.
 
     # The lockfile ships with the action, not with the caller's repository, so the analysis runs
     # on exactly the dependency set this release was tested with.
