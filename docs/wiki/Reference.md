@@ -51,6 +51,7 @@ Commented-out entries in `env.example` are optional advanced switches.
 | Script | Purpose |
 |---|---|
 | `scripts/action_entrypoint.sh` | Entry point for the DueDil.Agent composite action (`action.yml`). |
+| `scripts/build_demo_video.py` | Build the narrated demo video from a recorded session. |
 | `scripts/capture_demo.py` | Capture screenshots and a walkthrough video of the Streamlit UI. |
 | `scripts/coverage_badge.py` | Generate a shields.io-style coverage badge from the ``.coverage`` data file. |
 | `scripts/demo_offline.py` | Run DueDil.Agent end-to-end with no API keys and no network. |
@@ -58,6 +59,7 @@ Commented-out entries in `env.example` are optional advanced switches.
 | `scripts/import_probe.py` | Staged import probe: find which import kills a hosted deployment. |
 | `scripts/langsmith_key_check.py` | Диагностика ключа LangSmith: к какому инстансу он привязан и работает ли он. |
 | `scripts/make_banner.py` | Generate the 1280x640 GitHub social-preview banner (PNG + SVG). |
+| `scripts/make_demo_video.py` | Record the demo screencast and the README screenshots against a running UI. |
 | `scripts/make_example_decks.py` | Generate example pitch decks for five real IT companies, from public facts only. |
 | `scripts/make_run_stop_doc.py` | Build the personal "how to run / how to stop" walkthrough as a Word document. |
 | `scripts/make_sample_deck.py` | Generate a small synthetic pitch-deck PDF for testing DueDil.Agent. |

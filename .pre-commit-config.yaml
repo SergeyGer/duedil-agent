@@ -12,7 +12,7 @@ repos:
       # embeds them). Playwright also drops .webm sources next to the captures when
       # recording; those are not meant to be committed, so they stay over the limit.
       - id: check-added-large-files
-        args: ["--maxkb=2048"]
+        args: ["--maxkb=8192"]
         exclude: ^docs/media/.*\.webm$
 
   # Keep this `rev` in sync with the `ruff` pin in pyproject.toml ([dev]) and the CI lint

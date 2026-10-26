@@ -57,3 +57,17 @@ def test_translate_formats_placeholders():
 def test_translate_tolerates_missing_kwargs():
     assert "{count" in translate("en", "ok_parsed")
     assert translate("en", "err_parse", nope=1) == TRANSLATIONS["en"]["err_parse"]
+
+
+TECHNICAL_TERMS = ("LangGraph", "Tavily", "LlamaParse", "Streamlit", "multi-agent", "Extractor")
+
+
+def test_translations_do_not_leak_implementation_terms():
+    """The UI is for investors: no framework or vendor names in any language table."""
+
+    for code, table in TRANSLATIONS.items():
+        for key, value in table.items():
+            for term in TECHNICAL_TERMS:
+                assert term.lower() not in value.lower(), (
+                    f"{code}.{key} mentions {term!r}: {value!r}"
+                )

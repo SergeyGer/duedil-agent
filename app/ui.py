@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st  # noqa: E402
 
+from app.comment import recommendation_of
 from app.display import (  # noqa: E402
     benchmark_rows,
     metric_rows,
@@ -157,12 +158,39 @@ def _browse_examples_dialog() -> None:
             st.rerun()
 
 
+def _hero(t) -> None:
+    """The landing block: purpose, outcome and the three things a reader gets."""
+
+    st.title(t("hero_title"))
+    st.markdown(
+        "<div style='font-size:1.08rem;line-height:1.6;color:#3f4a5a;max-width:62rem;"
+        f"margin:-0.4rem 0 1.4rem 0'>{t('hero_subtitle')}</div>",
+        unsafe_allow_html=True,
+    )
+
+    columns = st.columns(3, gap="large")
+    values = (
+        ("value_1_title", "value_1_text"),
+        ("value_2_title", "value_2_text"),
+        ("value_3_title", "value_3_text"),
+    )
+    for column, (title_key, text_key) in zip(columns, values, strict=True):
+        with column:
+            st.markdown(f"**{t(title_key)}**")
+            st.caption(t(text_key))
+
+    st.markdown(f"#### {t('how_header')}")
+    st.markdown(t("how_steps"))
+
+
 def _chosen_example_name() -> str | None:
     return st.session_state.get("chosen_example")
 
 
 def main() -> None:
-    st.set_page_config(page_title="DueDil.Agent", page_icon="🔍", layout="wide")
+    st.set_page_config(
+        page_title="DueDil — Investment Due Diligence", page_icon="📄", layout="wide"
+    )
     if "lang" not in st.session_state:
         st.session_state["lang"] = DEFAULT_LANGUAGE
 
@@ -171,9 +199,6 @@ def main() -> None:
 
     def t(key: str, **kwargs) -> str:
         return translate(lang, key, **kwargs)
-
-    st.title("🔍 DueDil.Agent")
-    st.caption(t("tagline"))
 
     with st.sidebar:
         st.header(t("sidebar_header"))
@@ -209,14 +234,17 @@ def main() -> None:
         st.divider()
         st.caption(t("keys_caption"))
 
+    # The first screen speaks to the reader's job, not to the implementation: what they get,
+    # how it works, and what to do next.
+    if not run:
+        _hero(t)
+        st.info(t("idle_hint"))
+        return
+
     st.subheader(t("progress_header"))
     step_slots = {node: st.empty() for node in NODE_LABEL_KEYS}
     for node, slot in step_slots.items():
         slot.info(f"⏳ {t(NODE_LABEL_KEYS[node])}")
-
-    if not run:
-        st.info(t("idle_hint"))
-        return
 
     deck_bytes: bytes | None = None
     if uploaded is not None:
@@ -274,10 +302,16 @@ def main() -> None:
     benchmarks = state.get("financial_benchmarks") or {}
     flags = state.get("red_flags") or []
 
+    # The step-by-step chips did their job while the analysis ran; keeping them on screen
+    # afterwards pushes the result below the fold.
+    for slot in step_slots.values():
+        slot.empty()
+
     # --- what ran, and what came out of it ---------------------------------
     st.subheader(t("summary_header"))
-    st.caption(t("about_model", model=state.get("used_model") or "unknown"))
     summary = state_summary(state)
+    summary = [row for row in summary if row["metric"] != "Model used"]
+    summary.insert(0, {"metric": t("recommendation_metric"), "value": recommendation_of(state)})
     summary_cols = st.columns(len(summary))
     for column, row in zip(summary_cols, summary, strict=True):
         column.metric(row["metric"], row["value"])
@@ -288,14 +322,30 @@ def main() -> None:
         st.subheader(t("metrics_header"))
         rows = metric_rows(metrics)
         if rows:
-            st.dataframe(rows, hide_index=True, use_container_width=True)
+            st.dataframe(
+                rows,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "metric": t("table_metric"),
+                    "value": t("table_value"),
+                },
+            )
         else:
             st.write(t("no_metrics"))
     with right:
         st.subheader(t("benchmarks_header"))
         rows = benchmark_rows(benchmarks)
         if benchmarks:
-            st.dataframe(rows, hide_index=True, use_container_width=True)
+            st.dataframe(
+                rows,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "metric": t("table_metric"),
+                    "value": t("table_value"),
+                },
+            )
         else:
             st.write(t("no_benchmarks"))
 
@@ -312,7 +362,7 @@ def main() -> None:
     callout(_literal(f"{marker} {verdict}"))
 
     if flags:
-        st.subheader(f"🚩 {t('redflags_header')}")
+        st.subheader(t("redflags_header"))
         for flag in flags:
             st.warning(_literal(flag))
     else:
