@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contents; every following page carries a running header and a page number. Tables get a navy
   header row and zebra striping, quotes render as callout boxes.
 
+### Fixed
+
+- Metric values lose the deck's own markdown (`## **Business model** …`) before they reach a
+  table or the report cover: the dashboard showed the formatting instead of the fact.
+
 ### Changed
 
 - **The run button is disabled until there is something to analyse** — an uploaded deck or a

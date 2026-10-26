@@ -137,3 +137,16 @@ def test_state_summary_says_unknown_rather_than_showing_nothing():
     rows = {row["metric"]: row["value"] for row in state_summary({})}
     assert rows["Model used"] == "unknown"
     assert rows["Critic passes"] == "0 (nothing to re-check)"
+
+
+def test_metric_values_lose_deck_formatting():
+    """Regression: a dashboard showed `## **Business model** Per-seat …` verbatim."""
+
+    from app.display import format_metric_value
+
+    assert format_metric_value("## **Business model** Per-seat") == "Business model Per-seat"
+    assert format_metric_value("# **Cursor (Anysphere)** — reconstructed") == (
+        "Cursor (Anysphere) — reconstructed"
+    )
+    assert format_metric_value(["**A**", "## B"]) == "A, B"
+    assert format_metric_value("$100M") == "$100M"
