@@ -183,12 +183,16 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.md_out).write_text(redact_secrets(memo), encoding="utf-8", newline="\n")
 
     if args.comment_out:
-        Path(args.comment_out).parent.mkdir(parents=True, exist_ok=True)
-        # The summary is a fixed template over deck-derived values; the model label is validated
-        # and credential shapes are redacted, so no key can reach this file.
-        comment_text = redact_secrets(build_comment(state))
-        Path(args.comment_out).write_text(  # lgtm[py/clear-text-storage-sensitive-data]
-            comment_text, encoding="utf-8", newline="\n"
+        comment_path = Path(args.comment_out)
+        comment_path.parent.mkdir(parents=True, exist_ok=True)
+        comment_path.write_text(
+            # The summary is a fixed template over deck-derived values: the model label is
+            # validated and credential shapes are redacted. A taint tracker still follows the
+            # label from `DUE_DIL_MODEL` into this file, which is why the write is suppressed —
+            # `tests/test_redact.py` and `tests/test_comment.py` assert what can reach it.
+            redact_secrets(build_comment(state)),  # lgtm[py/clear-text-storage-sensitive-data]
+            encoding="utf-8",
+            newline="\n",
         )
 
     if args.json_out:
