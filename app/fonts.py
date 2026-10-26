@@ -52,8 +52,6 @@ BODY_FONT = "DuedilSans"
 BOLD_FONT = "DuedilSans-Bold"
 MONO_FONT = "DuedilMono"
 
-_MISSING = "—"
-
 
 def _from_font_dir(directory: str) -> tuple[str, str] | None:
     """Return ``(regular, bold)`` from ``DUEDIL_PDF_FONT``: either a file or a directory."""
