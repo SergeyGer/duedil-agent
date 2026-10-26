@@ -13,6 +13,7 @@ and the UI stays a thin layer over it.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 # Order the metric table so the numbers a reader looks for first come first. Anything
@@ -70,10 +71,19 @@ def format_metric_value(value: Any) -> str:
     if value is None:
         return "—"
     if isinstance(value, list):
-        return ", ".join(str(item) for item in value) if value else "—"
-    text = str(value).strip()
+        return ", ".join(_plain(item) for item in value) if value else "—"
+    text = _plain(value)
     if not text or text.lower() in {"[not_found]", "not_found", "n/a", "na", "none", "unknown"}:
         return "— (not in the deck)"
+    return text
+
+
+def _plain(value: Any) -> str:
+    """Flatten deck formatting out of a value: no `##`, no `**`, one line."""
+
+    text = re.sub(r"^[\s#>*_-]+", "", str(value or ""))
+    text = text.replace("**", "").replace("__", "")
+    text = re.sub(r"\s+", " ", text).strip(" -:;,")
     return text
 
 
