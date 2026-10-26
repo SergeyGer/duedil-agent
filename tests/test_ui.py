@@ -95,11 +95,17 @@ def test_a_chosen_example_becomes_the_deck_and_can_be_cleared():
     assert at.text_input[0].value == ""
 
 
-def test_ui_asks_for_a_deck_when_none_is_provided():
+def test_the_run_button_is_disabled_until_a_deck_is_chosen():
+    """Nothing to analyse, nothing to click — the button says so instead of failing later."""
+
     at = AppTest.from_file(UI).run()
-    at.button(key="run_button").click().run()
-    assert not at.exception
-    assert any("Attach a deck or open a sample" in err.value for err in at.error)
+    button = at.button(key="run_button")
+    assert button.disabled is True
+    assert button.help and "Attach a deck" in button.help
+
+    at.session_state["chosen_example"] = "cursor_deck.pdf"
+    at.run()
+    assert at.button(key="run_button").disabled is False
 
 
 def test_first_screen_speaks_to_an_investor_not_to_an_engineer():
@@ -130,3 +136,23 @@ def test_the_fallback_copy_matches_the_english_table():
     for key, value in EN_FALLBACK.items():
         assert key in TRANSLATIONS["en"], f"{key} is not a real translation key"
         assert TRANSLATIONS["en"][key] == value, f"{key} drifted from the English table"
+
+
+def test_the_memo_is_split_at_its_sections():
+    """The long market-analysis prose is rendered behind a disclosure, so the split must work."""
+
+    from app.ui import _memo_sections
+
+    memo = (
+        "# Investment Memo — Acme\n\n"
+        "## 1. Executive Summary\nAcme is growing.\n\n"
+        "## 3. Market Analysis\nThe market is large.\nSecond line.\n\n"
+        "## 6. Final Recommendation\n**INVEST**"
+    )
+    sections = _memo_sections(memo)
+
+    headings = [heading for heading, _ in sections]
+    assert "1. Executive Summary" in headings
+    assert "3. Market Analysis" in headings
+    market = dict(sections)["3. Market Analysis"]
+    assert "The market is large." in market and "Second line." in market

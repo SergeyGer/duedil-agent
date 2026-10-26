@@ -59,7 +59,12 @@ def _shot(page: Page, name: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Record the demo video and screenshots.")
     parser.add_argument("--base-url", default="http://127.0.0.1:8511")
-    parser.add_argument("--sample", default="lovable_deck.pdf", help="bundled deck to analyse")
+    parser.add_argument("--sample", default="cursor_deck.pdf", help="bundled deck to analyse")
+    parser.add_argument(
+        "--sample-label",
+        default="Cursor — cursor_deck.pdf",
+        help="exact button label in the dialog",
+    )
     parser.add_argument("--out", default="/tmp/duedil-capture")
     parser.add_argument("--width", type=int, default=1600)
     parser.add_argument("--height", type=int, default=900)
@@ -100,7 +105,7 @@ def main() -> int:
         page.get_by_role("button", name=SAMPLE_BUTTON).click()
         _settle(page, 900)
         mark("dialog")
-        page.get_by_role("button", name="📄 Lovable — lovable_deck.pdf").click()
+        page.get_by_role("button", name=f"📄 {args.sample_label}").click()
         _settle(page, 1200)
         mark("sample_selected")
 
@@ -122,12 +127,13 @@ def main() -> int:
         mark("tables")
 
         try:
-            page.get_by_text("Red flags", exact=True).scroll_into_view_if_needed()
+            # A clean run has no red flags at all: fail fast instead of stalling the recording.
+            page.get_by_text("Red flags", exact=True).scroll_into_view_if_needed(timeout=2500)
             _settle(page, 900)
             _shot(page, "ui-redflags-en")
             mark("red_flags")
-        except Exception as exc:  # pragma: no cover - a clean run has no flags
-            print(f"  (no red flags section: {exc})")
+        except Exception:  # pragma: no cover - a clean run has no flags
+            print("  (no red flags section: the run found none)")
 
         page.get_by_text("Investment memo", exact=True).scroll_into_view_if_needed()
         _settle(page, 900)

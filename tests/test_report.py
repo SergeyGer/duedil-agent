@@ -65,3 +65,41 @@ def test_pdf_contains_no_unrenderable_glyphs(tmp_path):
 
     if unicode_fonts:
         assert "Привет" in extracted, "a Unicode font must keep Cyrillic readable"
+
+
+def test_the_report_opens_with_a_cover_page(tmp_path):
+    """A memo is a document for a partner: it opens with its own cover, not with section 1."""
+
+    from app.parser import parse_pdf_to_markdown
+
+    path = tmp_path / "report.pdf"
+    markdown_to_pdf(
+        SAMPLE,
+        str(path),
+        model="gpt-4o (OpenAI)",
+        company="Acme AI",
+        recommendation="DEEP AUDIT",
+        facts=[("ARR", "$1.2M"), ("Team size", "10")],
+    )
+    text = parse_pdf_to_markdown(path)
+
+    assert "INVESTMENT DUE DILIGENCE REPORT" in text
+    assert "Acme AI" in text
+    assert "DEEP AUDIT" in text
+    assert "CONTENTS" in text
+    assert "1. Executive Summary" in text
+    assert "Prepared by DueDil" in text
+    # The memo's own H1 is not repeated on the content page: the cover carries the title.
+    assert text.count("Investment Memo") <= 1
+
+
+def test_page_numbers_and_running_header_are_present(tmp_path):
+    from app.parser import parse_pdf_to_markdown
+
+    path = tmp_path / "report.pdf"
+    markdown_to_pdf(SAMPLE, str(path), company="Acme AI")
+    text = parse_pdf_to_markdown(path)
+
+    assert "Due diligence - Acme AI" in text
+    assert "Page 1" in text
+    assert "confidential" in text

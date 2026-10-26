@@ -37,9 +37,9 @@ how it is built.
 
 ## See it work
 
-A real run — upload the deck, the analysis runs, and the memo ends in **REJECT** because the
-company does not survive scrutiny. No upload needed to try it: five example decks ship with the
-app behind *or open a sample deck*.
+A real run — upload the deck, the analysis runs, and the memo comes back with a recommendation,
+the benchmarked figures and whatever red flags survive. No upload needed to try it: five example
+decks ship with the app behind *or open a sample deck*.
 
 <video src="docs/media/demo.mp4" controls width="820"></video>
 
@@ -50,7 +50,7 @@ with the voiceover describing what each step does.
 |---|---|---|
 | ![Start screen](docs/media/ui-idle-en.png) | ![Analysis running](docs/media/ui-running.png) | ![Results](docs/media/ui-results-en.png) |
 
-Red flags are stated in full, not as a score — each one names the claim and the evidence that
+When something does not add up, the flag is stated in full — the claim, and the figure that
 contradicts it:
 
 ![Red flags](docs/media/ui-redflags-en.png)

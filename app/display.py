@@ -153,12 +153,31 @@ def state_summary(state: dict[str, Any] | None) -> list[dict[str, str]]:
     ]
 
 
+def report_facts(state: dict[str, Any] | None) -> list[tuple[str, str]]:
+    """The four figures printed on the report's cover."""
+
+    state = state or {}
+    metrics = state.get("extracted_metrics") or {}
+    benchmarks = state.get("financial_benchmarks") or {}
+    per_employee = benchmarks.get("arr_per_employee")
+    return [
+        ("ARR (stated)", format_metric_value(metrics.get("arr"))),
+        ("Team size", format_metric_value(metrics.get("team_size"))),
+        (
+            "ARR / employee",
+            format_money(per_employee) if per_employee is not None else "not computable",
+        ),
+        ("Red flags", str(len(state.get("red_flags") or []))),
+    ]
+
+
 __all__ = [
     "benchmark_rows",
     "format_metric_value",
     "format_money",
     "format_ratio",
     "metric_rows",
+    "report_facts",
     "state_summary",
     "verdict_of",
 ]

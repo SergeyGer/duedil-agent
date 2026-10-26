@@ -15,10 +15,12 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas as pdf_canvas
 from reportlab.platypus import (
     HRFlowable,
     ListFlowable,
     ListItem,
+    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -84,17 +86,20 @@ def _build_table(rows: list[str], styles: dict) -> Table:
     if not parsed:
         return Spacer(1, 0)
     width = max(len(row) for row in parsed)
-    data = [
-        [Paragraph(_inline(cell), styles["body"]) for cell in row]
-        + [Paragraph("", styles["body"])] * (width - len(row))
-        for row in parsed
-    ]
+    data = []
+    for index, row in enumerate(parsed):
+        cells = [
+            Paragraph(_inline(cell), styles["table_head" if index == 0 else "body"]) for cell in row
+        ]
+        data.append(cells + [Paragraph("", styles["body"])] * (width - len(row)))
     table = Table(data, hAlign="LEFT")
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e8eef7")),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#b8c4d9")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#12355b")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f6f8fb")]),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#d8e0ea")),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 6),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 6),
@@ -128,8 +133,9 @@ def _styles() -> dict[str, ParagraphStyle]:
             fontName=_BOLD_FONT,
             fontSize=15,
             leading=19,
-            spaceBefore=12,
+            spaceBefore=14,
             spaceAfter=6,
+            keepWithNext=True,
             textColor=colors.HexColor("#1a4d8f"),
         ),
         "h3": ParagraphStyle(
@@ -156,8 +162,20 @@ def _styles() -> dict[str, ParagraphStyle]:
             fontName=_BODY_FONT,
             fontSize=10.5,
             leading=15,
-            leftIndent=14,
-            textColor=colors.HexColor("#555555"),
+            leftIndent=12,
+            borderColor=colors.HexColor("#1a4d8f"),
+            borderWidth=0.9,
+            borderPadding=7,
+            backColor=colors.HexColor("#f2f5fa"),
+            textColor=colors.HexColor("#33404f"),
+        ),
+        "table_head": ParagraphStyle(
+            "DDthead",
+            parent=base["BodyText"],
+            fontName=_BOLD_FONT,
+            fontSize=9.5,
+            leading=13,
+            textColor=colors.white,
         ),
     }
 
@@ -250,18 +268,229 @@ def _flowables(markdown_text: str, styles: dict) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Cover page + running header/footer
+# ---------------------------------------------------------------------------
+_DATE_FORMAT = "%d %B %Y"
+
+_BADGE_COLORS = {
+    "invest": colors.HexColor("#1f7a44"),
+    "deep audit": colors.HexColor("#a86412"),
+    "reject": colors.HexColor("#a3231c"),
+}
+
+
+def company_from_markdown(markdown_text: str) -> str:
+    """Pull the company out of the memo's first heading (``# Investment Memo — X``)."""
+
+    for line in (markdown_text or "").splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("# "):
+            continue
+        text = stripped[2:].strip()
+        for separator in ("—", "–", "-", ":"):
+            if separator in text:
+                candidate = text.split(separator, 1)[1].strip()
+                if candidate:
+                    return candidate
+        return text
+    return ""
+
+
+def _strip_leading_heading(markdown_text: str) -> str:
+    """Drop the first H1: the cover already carries the report's title."""
+
+    lines = (markdown_text or "").splitlines()
+    for index, line in enumerate(lines):
+        if not line.strip():
+            continue
+        if line.strip().startswith("# "):
+            return "\n".join(lines[:index] + lines[index + 1 :]).lstrip("\n")
+        break
+    return markdown_text or ""
+
+
+def sections_from_markdown(markdown_text: str) -> list[str]:
+    """Return the level-2 headings, in order — the report's table of contents."""
+
+    return [
+        match.group(2).strip()
+        for match in (
+            _HEADING_RE.match(line.strip()) for line in (markdown_text or "").splitlines()
+        )
+        if match and len(match.group(1)) == 2
+    ]
+
+
+class _ReportContext:
+    """Everything the cover and the running header need."""
+
+    def __init__(
+        self,
+        *,
+        title: str,
+        company: str,
+        recommendation: str,
+        facts: list[tuple[str, str]],
+        sections: list[str],
+        model: str,
+        stamp: str,
+    ) -> None:
+        self.title = title
+        self.company = company or "Investment memo"
+        self.recommendation = recommendation.strip()
+        self.facts = facts[:4]
+        self.sections = sections[:9]
+        self.model = model
+        self.stamp = stamp
+
+
+def _draw_cover(canvas: pdf_canvas.Canvas, doc, context: _ReportContext) -> None:
+    page_width, page_height = A4
+    canvas.saveState()
+
+    # Top band, with the report type and the company.
+    band_height = page_height * 0.42
+    canvas.setFillColor(colors.HexColor("#0b2545"))
+    canvas.rect(0, page_height - band_height, page_width, band_height, stroke=0, fill=1)
+    canvas.setFillColor(colors.HexColor("#2e6be6"))
+    canvas.rect(0, page_height - band_height, page_width, 6, stroke=0, fill=1)
+
+    canvas.setFillColor(colors.HexColor("#9db4d6"))
+    canvas.setFont(_BOLD_FONT, 10)
+    canvas.drawString(2 * cm, page_height - 2.6 * cm, "INVESTMENT DUE DILIGENCE REPORT")
+
+    canvas.setFillColor(colors.white)
+    size = 26 if len(context.company) <= 28 else 20
+    canvas.setFont(_BOLD_FONT, size)
+    canvas.drawString(2 * cm, page_height - 3.9 * cm, context.company[:60])
+
+    canvas.setFillColor(colors.HexColor("#c9d8ee"))
+    canvas.setFont(_BODY_FONT, 11)
+    canvas.drawString(2 * cm, page_height - 4.7 * cm, context.stamp + "  |  Prepared by DueDil")
+
+    # Recommendation badge.
+    if context.recommendation:
+        badge = context.recommendation.upper()
+        colour = _BADGE_COLORS.get(context.recommendation.lower(), colors.HexColor("#44536b"))
+        canvas.setFillColor(colour)
+        width = max(canvas.stringWidth(badge, _BOLD_FONT, 12) + 28, 96)
+        canvas.roundRect(
+            2 * cm, page_height - band_height + 1.5 * cm, width, 0.95 * cm, 6, stroke=0, fill=1
+        )
+        canvas.setFillColor(colors.white)
+        canvas.setFont(_BOLD_FONT, 12)
+        canvas.drawCentredString(2 * cm + width / 2, page_height - band_height + 1.75 * cm, badge)
+
+    # Key figures strip under the band.
+    y = page_height - band_height - 2.2 * cm
+    if context.facts:
+        column_width = (page_width - 4 * cm) / len(context.facts)
+        for index, (label, value) in enumerate(context.facts):
+            x = 2 * cm + index * column_width
+            canvas.setFillColor(colors.HexColor("#6b7a90"))
+            canvas.setFont(_BODY_FONT, 9)
+            canvas.drawString(x, y, label.upper()[:26])
+            canvas.setFillColor(colors.HexColor("#18212e"))
+            canvas.setFont(_BOLD_FONT, 15)
+            canvas.drawString(x, y - 0.75 * cm, str(value)[:24])
+
+    # Table of contents: a report announces what it contains.
+    if context.sections:
+        top = page_height - band_height - 5.6 * cm
+        canvas.setFillColor(colors.HexColor("#6b7a90"))
+        canvas.setFont(_BOLD_FONT, 9)
+        canvas.drawString(2 * cm, top, "CONTENTS")
+        canvas.setFillColor(colors.HexColor("#18212e"))
+        canvas.setFont(_BODY_FONT, 10.5)
+        y = top - 0.9 * cm
+        for section in context.sections:
+            canvas.drawString(2 * cm, y, section[:78])
+            y -= 0.62 * cm
+
+    # Footer of the cover.
+    canvas.setStrokeColor(colors.HexColor("#d8e0ea"))
+    canvas.setLineWidth(0.6)
+    canvas.line(2 * cm, 3.0 * cm, page_width - 2 * cm, 3.0 * cm)
+    canvas.setFillColor(colors.HexColor("#6b7a90"))
+    canvas.setFont(_BODY_FONT, 8.5)
+    canvas.drawString(
+        2 * cm,
+        2.4 * cm,
+        f"Prepared {context.stamp}"
+        + (f"  |  analysis produced with {context.model}" if context.model else ""),
+    )
+    canvas.drawString(
+        2 * cm,
+        1.9 * cm,
+        "Automated first-pass screen. Verify every figure independently before an investment decision.",
+    )
+    canvas.restoreState()
+
+
+def _draw_running_header_footer(canvas: pdf_canvas.Canvas, doc, context: _ReportContext) -> None:
+    page_width, page_height = A4
+    canvas.saveState()
+
+    canvas.setFont(_BODY_FONT, 8.5)
+    canvas.setFillColor(colors.HexColor("#6b7a90"))
+    canvas.drawString(2 * cm, page_height - 1.5 * cm, f"Due diligence - {context.company}"[:90])
+    canvas.drawRightString(page_width - 2 * cm, page_height - 1.5 * cm, context.stamp)
+    canvas.setStrokeColor(colors.HexColor("#d8e0ea"))
+    canvas.setLineWidth(0.6)
+    canvas.line(2 * cm, page_height - 1.8 * cm, page_width - 2 * cm, page_height - 1.8 * cm)
+
+    canvas.line(2 * cm, 1.9 * cm, page_width - 2 * cm, 1.9 * cm)
+    canvas.drawString(2 * cm, 1.45 * cm, "DueDil - confidential")
+    canvas.drawRightString(page_width - 2 * cm, 1.45 * cm, f"Page {doc.page - 1}")
+    canvas.restoreState()
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 def markdown_to_pdf_bytes(
     markdown_text: str,
-    title: str = "DueDil.Agent — Deal Memo",
+    title: str = "Investment Due Diligence Report",
     model: str = "",
+    *,
+    company: str = "",
+    recommendation: str = "",
+    facts: list[tuple[str, str]] | None = None,
+    stamp: str | None = None,
 ) -> bytes:
-    """Render a Markdown memo to PDF and return the raw bytes.
+    """Render a Markdown memo to a PDF report and return the raw bytes.
 
-    ``model`` is stamped into the footer: a memo produced by an LLM has to say which
-    model produced it, otherwise the reader cannot judge or reproduce the analysis.
+    The first page is a cover: report type, company, date, the recommendation and up to four
+    key figures — the shape a reader expects from an investment memo. Every following page
+    carries a running header and a page number.
+
+    ``model`` is stamped into the footer: a report produced by an LLM has to say which model
+    produced it, otherwise the reader cannot judge or reproduce the analysis.
     """
+
+    clean = sanitize_for_pdf(markdown_text, unicode_font=_UNICODE_FONTS) if markdown_text else ""
+    stamp_text = stamp or datetime.now(UTC).strftime(_DATE_FORMAT)
+
+    context = _ReportContext(
+        title=sanitize_for_pdf(title, unicode_font=_UNICODE_FONTS),
+        company=sanitize_for_pdf(
+            company or company_from_markdown(markdown_text), unicode_font=_UNICODE_FONTS
+        ),
+        recommendation=sanitize_for_pdf(recommendation, unicode_font=_UNICODE_FONTS),
+        facts=[
+            (
+                sanitize_for_pdf(str(label), unicode_font=_UNICODE_FONTS),
+                sanitize_for_pdf(str(value), unicode_font=_UNICODE_FONTS),
+            )
+            for label, value in (facts or [])
+        ],
+        sections=[
+            sanitize_for_pdf(section, unicode_font=_UNICODE_FONTS)
+            for section in sections_from_markdown(markdown_text)
+        ],
+        model=sanitize_for_pdf(model, unicode_font=_UNICODE_FONTS),
+        stamp=sanitize_for_pdf(stamp_text, unicode_font=_UNICODE_FONTS),
+    )
 
     buffer = io.BytesIO()
     document = SimpleDocTemplate(
@@ -269,37 +498,52 @@ def markdown_to_pdf_bytes(
         pagesize=A4,
         leftMargin=2 * cm,
         rightMargin=2 * cm,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm,
-        title=sanitize_for_pdf(title, unicode_font=_UNICODE_FONTS),
+        topMargin=2.4 * cm,
+        bottomMargin=2.2 * cm,
+        title=context.title,
         author="DueDil.Agent",
     )
+
     styles = _styles()
-    # One place, before parsing: nothing that the font cannot draw reaches ReportLab.
-    story = _flowables(sanitize_for_pdf(markdown_text, unicode_font=_UNICODE_FONTS), styles)
-    story.append(Spacer(1, 14))
-    stamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    byline = f"Generated by DueDil.Agent on {stamp}"
-    if model:
-        byline += f" · model: {model}"
-    byline = sanitize_for_pdf(byline, unicode_font=_UNICODE_FONTS)
-    story.append(Paragraph(f"<i>{byline}</i>", styles["quote"]))
-    document.build(story)
+    story = [PageBreak()] + _flowables(_strip_leading_heading(clean), styles)
+    document.build(
+        story,
+        onFirstPage=lambda canv, doc: _draw_cover(canv, doc, context),
+        onLaterPages=lambda canv, doc: _draw_running_header_footer(canv, doc, context),
+    )
     return buffer.getvalue()
 
 
 def markdown_to_pdf(
     markdown_text: str,
     output_path: str,
-    title: str = "DueDil.Agent — Deal Memo",
+    title: str = "Investment Due Diligence Report",
     model: str = "",
+    *,
+    company: str = "",
+    recommendation: str = "",
+    facts: list[tuple[str, str]] | None = None,
+    stamp: str | None = None,
 ) -> str:
-    """Render a Markdown memo to a PDF file at ``output_path``."""
+    """Render a Markdown memo to a PDF report file at ``output_path``."""
 
-    data = markdown_to_pdf_bytes(markdown_text, title=title, model=model)
+    data = markdown_to_pdf_bytes(
+        markdown_text,
+        title=title,
+        model=model,
+        company=company,
+        recommendation=recommendation,
+        facts=facts,
+        stamp=stamp,
+    )
     with open(output_path, "wb") as handle:
         handle.write(data)
     return output_path
 
 
-__all__ = ["markdown_to_pdf", "markdown_to_pdf_bytes"]
+__all__ = [
+    "company_from_markdown",
+    "sections_from_markdown",
+    "markdown_to_pdf",
+    "markdown_to_pdf_bytes",
+]

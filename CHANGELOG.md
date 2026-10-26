@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The PDF is a report, not a printout.** It opens with a cover: report type, company, date, a
+  colour-coded recommendation (INVEST / DEEP AUDIT / REJECT), four key figures and a table of
+  contents; every following page carries a running header and a page number. Tables get a navy
+  header row and zebra striping, quotes render as callout boxes.
+
+### Changed
+
+- **The run button is disabled until there is something to analyse** — an uploaded deck or a
+  chosen sample — with the reason as its tooltip.
+- **Details are collapsed by default**: the step-by-step analysis panel, and the memo's
+  *Market Analysis* section, which opens only when a reader wants the reasoning.
+- The offline demo no longer mixes the recorded market notes (about another company) into a
+  deck-aware run, and its memo is cleaned before rendering: no deck `##` headings, no
+  `[NOT_FOUND]` tokens, money formatted, and no phantom red flag from a literal "none".
+- The demo video now shows an **INVEST** run (Cursor), holds on the report's cover for six
+  seconds, and shows the PDF pages statically — no zoom, no pan.
+
+### Added
+
 - **A narrated demo video** (`docs/media/demo.mp4`): a real session — sample deck, live run,
   verdict, red flags, memo and the PDF — with a professional English voiceover, title and outro
   cards. Reproducible with `scripts/make_demo_video.py` (records the session and the screenshots)

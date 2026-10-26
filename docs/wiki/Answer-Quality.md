@@ -76,7 +76,7 @@ used, so a difference is explainable.
 When no API key is configured — the hosted demo — the LLM nodes are replaced by deterministic
 agents (`app/offline_agents.py`): `OfflineExtractorLLM` reads titles, amounts and headcounts by
 rule (`app/offline_agents.py:243`), and `OfflineSupervisorLLM` assembles the memo from that
-reading (`app/offline_agents.py:383`). The
+reading (`app/offline_agents.py:454`). The
 pipeline is the same; only the reader changes. The UI states that no model ran, and the memo
 byline says `offline rules, deck_aware (no model)` — a weaker answer that is honest about being
 weaker.

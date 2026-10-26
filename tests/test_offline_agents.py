@@ -174,3 +174,44 @@ def test_unknown_offline_mode_is_rejected(monkeypatch):
 
     with pytest.raises(ValueError, match="unknown offline mode"):
         install_stubs(mode="invented")
+
+
+def test_the_offline_memo_reads_like_a_report_not_like_a_deck_dump():
+    """Regression: deck fragments used to arrive with their `##` markers and `[NOT_FOUND]`."""
+
+    import json
+
+    from app.offline_agents import build_offline_memo
+
+    metrics = {
+        "company_name": "Acme",
+        "arr": "$1M",
+        "team_size": "10",
+        "mrr": "[NOT_FOUND]",
+        "business_model": "Business model: subscription",
+        "key_claims": ["## Growth Reported\nfast"],
+    }
+    benchmarks = {
+        "status": "above",
+        "verdict": "Healthy: ARR/employee exceeds the benchmark.",
+        "arr_per_employee": 100000.0,
+        "benchmark_arr_per_employee": 100000,
+    }
+    context = (
+        "EXTRACTED METRICS (JSON):\n"
+        + json.dumps(metrics, indent=2)
+        + "\n\nFINANCIAL BENCHMARKS (JSON):\n"
+        + json.dumps(benchmarks, indent=2)
+        + "\n\nEXTERNAL MARKET DATA:\n(no market data)\n\nRED FLAGS:\n- none\n\n"
+        "Write the deal memo now.\n"
+    )
+
+    memo = build_offline_memo(context)
+
+    assert "## Growth" not in memo, "deck headings must not leak into the memo"
+    assert "[NOT_FOUND]" not in memo
+    assert "not stated in the deck" in memo
+    assert "No Red Flags were raised" in memo
+    assert "**INVEST**" in memo
+    assert "Business model: Business model" not in memo
+    assert "$100,000" in memo

@@ -104,17 +104,18 @@ NARRATION = {
     ),
     "upload": "Upload the deck, add the company's website, and the analysis starts on its own.",
     "pipeline": (
-        "It reads every figure the founders claim, checks those claims against public sources, "
-        "and benchmarks the numbers against the market."
+        "It reads every figure the founders claim, benchmarks the numbers against the market, "
+        "and looks for contradictions between them."
     ),
     "value": (
         "What comes back is the memo an analyst would have written: a clear recommendation, the "
-        "deck's figures next to market reality, and structured red flags — growth that no hiring "
-        "plan supports, competitors the deck never mentions."
+        "deck's figures next to market reality, and the red flags it found — with the evidence "
+        "that produced them."
     ),
     "trust": (
-        "No empty hallucinations: the rules are deterministic, and every export passes a strict "
-        "test suite. DueDil is open source — run it with one Docker command, or try the live demo."
+        "This public demo runs on deterministic rules rather than a language model, so nothing is "
+        "invented; with a key, the same pipeline gets a model's judgement. DueDil is open source "
+        "- run it with one Docker command, or try the live demo."
     ),
 }
 
@@ -274,14 +275,36 @@ def _mux(ffmpeg: str, video: Path, audio: Path, seconds: float, out: Path) -> No
     )
 
 
-def _slideshow(ffmpeg: str, images: list[tuple[Path, float]], out: Path) -> None:
+def _framed_page(page_path: Path, out_path: Path) -> Path:
+    """Centre a full A4 page on a neutral canvas, unscaled beyond fitting the frame.
+
+    The report is the artefact: it is shown whole, with a hairline shadow, never cropped and
+    never zoomed — a moving or partial page reads as a screenshot, not as a document.
+    """
+
+    page = Image.open(page_path).convert("RGB")
+    canvas = Image.new("RGB", (WIDTH, HEIGHT), (236, 240, 246))
+    page.thumbnail((WIDTH - 140, HEIGHT - 70), Image.LANCZOS)
+
+    x = (WIDTH - page.width) // 2
+    y = (HEIGHT - page.height) // 2
+    shadow = Image.new("RGB", (page.width + 10, page.height + 10), (205, 212, 222))
+    canvas.paste(shadow, (x - 5, y - 5))
+    canvas.paste(page, (x, y))
+    canvas.save(out_path)
+    return out_path
+
+
+def _slideshow(
+    ffmpeg: str, images: list[tuple[Path, float]], out: Path, *, zoom: bool = True
+) -> None:
     """Build a segment from stills with gentle zoom, hard cuts between them."""
 
     parts = []
     with tempfile.TemporaryDirectory() as tmp:
         for index, (image, seconds) in enumerate(images):
             part = Path(tmp) / f"part{index}.mp4"
-            _image_segment(ffmpeg, image, seconds, part, zoom=True)
+            _image_segment(ffmpeg, image, seconds, part, zoom=zoom)
             parts.append(part)
         listing = Path(tmp) / "list.txt"
         listing.write_text("".join(f"file '{p}'\n" for p in parts), encoding="utf-8")
@@ -438,9 +461,19 @@ def main() -> int:
             else:
                 _clip(args.ffmpeg, capture / "recording.webm", results_at, end, seconds, video_path)
         elif name == "E":
-            page_seconds = max(seconds - 3.0, 3.0) / max(len(pages), 1)
-            slides = [(page, page_seconds) for page in pages] + [(outro_card, 3.0)]
-            _slideshow(args.ffmpeg, slides, video_path)
+            # The cover is the document's face: hold it, then walk the pages at reading size.
+            framed = [
+                _framed_page(page, work / f"framed-{index}.png") for index, page in enumerate(pages)
+            ]
+            cover_hold = 6.0
+            rest = max(seconds - cover_hold - 2.5, 3.0)
+            body_seconds = rest / max(len(framed) - 1, 1)
+            slides = (
+                [(framed[0], cover_hold)]
+                + [(page, body_seconds) for page in framed[1:]]
+                + [(outro_card, 2.5)]
+            )
+            _slideshow(args.ffmpeg, slides, video_path, zoom=False)
 
         muxed = work / f"{name}.mp4"
         _mux(args.ffmpeg, video_path, voices[key], seconds, muxed)

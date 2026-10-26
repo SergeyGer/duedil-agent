@@ -308,6 +308,55 @@ def _json_block(context: str, label: str) -> dict[str, Any]:
         return {}
 
 
+def _clean(text: object, limit: int = 180) -> str:
+    """Flatten a fragment of the deck or of the market notes into one readable sentence.
+
+    Deck text arrives with its own markdown headings and line breaks; pasted into a bullet they
+    read like a paste accident. This keeps the words, drops the formatting and truncates.
+    """
+
+    value = str(text or "")
+    value = re.sub(r"^\s*#{1,6}\s*", "", value, flags=re.MULTILINE)
+    value = value.replace("|", " ").replace("*", "")
+    value = re.sub(r"\s+", " ", value).strip(" -:;,")
+    if len(value) > limit:
+        value = value[: limit - 1].rstrip() + "…"
+    return value
+
+
+_LABELS = {
+    "company_name": "Company",
+    "arr": "ARR",
+    "mrr": "MRR",
+    "tam": "TAM",
+    "team_size": "Team size",
+    "business_model": "Business model",
+    "founded_year": "Founded",
+    "claimed_leadership": "Claimed leadership",
+}
+
+_NOISE_PREFIXES = ("query:", "offline search:")
+
+
+def _label(key: str) -> str:
+    return _LABELS.get(key, key.replace("_", " ").capitalize())
+
+
+def _money(value: object) -> str:
+    if isinstance(value, (int, float)) and value:
+        return f"${value:,.0f}"
+    return "not computable"
+
+
+def _value(value: object) -> str:
+    """Render a metric the way a reader expects, not the way the extractor stores it."""
+
+    text = _clean(value, limit=140)
+    if not text or text == NOT_FOUND:
+        return "— not stated in the deck"
+    return text
+
+
 def build_offline_memo(supervisor_input: str) -> str:
     """Assemble the six-section memo from the supervisor's own context.
 
@@ -325,6 +374,7 @@ def build_offline_memo(supervisor_input: str) -> str:
         for line in (flags_match.group(1) if flags_match else "").splitlines()
         if line.strip().startswith("-")
     ]
+    flags = [flag for flag in flags if flag and flag.lower() not in {"none", "no red flags"}]
 
     market_match = re.search(
         r"EXTERNAL MARKET DATA:\s*(.*?)\n\nRED FLAGS:", supervisor_input, re.DOTALL
@@ -336,13 +386,31 @@ def build_offline_memo(supervisor_input: str) -> str:
     status = benchmarks.get("status") or "unknown"
 
     metric_lines = [
-        f"- **{key.replace('_', ' ').capitalize()}**: "
-        f"{', '.join(value) if isinstance(value, list) else value}"
+        f"- **{_label(key)}**: "
+        + (", ".join(_value(item) for item in value) if isinstance(value, list) else _value(value))
         for key, value in metrics.items()
         if key != "key_claims"
     ]
-    claims = metrics.get("key_claims") or []
+    claims = [_clean(claim, limit=140) for claim in (metrics.get("key_claims") or [])][:3]
+    claims = [claim for claim in claims if claim]
     claims_block = "\n".join(f"- {claim}" for claim in claims) or "- none stated in the deck"
+
+    # `ENVIRONMENT` lines with an empty body mean the search returned nothing: say so rather
+    # than quoting the queries as if they were findings.
+    market_lines = [
+        _clean(line, limit=400)
+        for line in market.splitlines()
+        if line.strip() and line.strip() != "()"
+    ]
+    market_body = [line for line in market_lines if not line.lower().startswith(_NOISE_PREFIXES)]
+    market_block = (
+        "\n".join(market_body)
+        if market_body
+        else (
+            "No external market data was collected for this run — the offline demo does not call "
+            "a search provider."
+        )
+    )
 
     recommendation = {"above": "INVEST", "below": "REJECT"}.get(status, "DEEP AUDIT")
     flags_count = len(flags)
@@ -352,31 +420,34 @@ def build_offline_memo(supervisor_input: str) -> str:
         "## 1. Executive Summary\n"
         f"Automated first-pass due diligence for **{company}**. The financial audit "
         f"returned **{status}**: {verdict}\n\n"
-        f"The critic raised **{flags_count}** Red Flag(s), listed in section 5. "
-        f"Claims the deck makes about itself:\n{claims_block}\n\n"
+        + (
+            f"The critic raised **{flags_count}** "
+            f"{'Red Flag' if flags_count == 1 else 'Red Flags'}, listed in section 5. "
+            if flags_count
+            else "No Red Flags were raised in this pass. "
+        )
+        + f"Claims the deck makes about itself:\n{claims_block}\n\n"
         "## 2. Startup Metrics\n"
         + ("\n".join(metric_lines) or "- no metrics extracted from the deck")
         + "\n\n"
         "## 3. Market Analysis\n"
-        "The figures below come from the bundled offline snapshot, not from a live search "
-        "of the company:\n\n"
-        f"{market}\n\n"
+        f"{market_block}\n\n"
         "## 4. Financial Audit\n"
         f"{verdict}\n\n"
         f"- Status: **{status}**\n"
-        f"- ARR: {metrics.get('arr')} · team size: {metrics.get('team_size')} · "
-        f"ARR per employee: {benchmarks.get('arr_per_employee') or 'not computable'}\n"
-        f"- Benchmark: {benchmarks.get('benchmark_arr_per_employee') or 'n/a'} "
+        f"- ARR: {_value(metrics.get('arr'))} | team size: {_value(metrics.get('team_size'))} | "
+        f"ARR per employee: {_money(benchmarks.get('arr_per_employee'))}\n"
+        f"- Benchmark: {_money(benchmarks.get('benchmark_arr_per_employee'))} "
         "(B2B SaaS, per employee)\n\n"
         "## 5. Hidden Risks (Red Flags)\n"
         + ("\n".join(f"- {flag}" for flag in flags) or "- none")
         + "\n\n"
         "## 6. Final Recommendation\n"
         f"**{recommendation}**\n\n"
-        f"{flags_count} Red Flag(s) and a **{status}** financial audit. "
-        "This is a first-pass screen produced without a language model: the figures were "
-        "read from the deck by rule, and the market notes are a canned snapshot. "
-        "Configure the API keys to get a model's judgement instead.\n"
+        f"{flags_count} {'Red Flag' if flags_count == 1 else 'Red Flags'} and a "
+        f"**{status}** financial audit. This is a first-pass screen produced without a "
+        "language model: the figures were read from the deck by rule, and no external market "
+        "data was collected. Configure the API keys to get a model's judgement instead.\n"
     )
 
 
