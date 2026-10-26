@@ -173,7 +173,12 @@ def _canned_payload() -> tuple[dict, str, list[str]]:
     )
 
 
-def install_stubs(delay: float = 0.0, mode: str = "canned") -> str:
+def install_stubs(
+    delay: float = 0.0,
+    mode: str = "canned",
+    market_blocks: list[str] | None = None,
+    llm_red_flags: list[str] | None = None,
+) -> str:
     """Swap the LLM and the search tool for offline versions.
 
     ``mode`` is ``"canned"`` (recorded NimbusAI payloads — the same output for any deck)
@@ -186,12 +191,20 @@ def install_stubs(delay: float = 0.0, mode: str = "canned") -> str:
     if mode not in OFFLINE_MODES:
         raise ValueError(f"unknown offline mode {mode!r}; expected one of {OFFLINE_MODES}")
 
-    _, memo, red_flags = _canned_payload()
+    # The canned NimbusAI market notes are right for the recorded demo and wrong for any other
+    # deck: a caller running an arbitrary file (the CLI's `--offline`) passes an empty list, so
+    # the memo never quotes evidence about a different company.
+    blocks = _market_blocks() if market_blocks is None else market_blocks
+    _, memo, recorded_flags = _canned_payload()
+    # Same reasoning for the recorded LLM flags: they describe the NimbusAI example deck. A
+    # caller analysing its own deck passes an empty list and gets only the deterministic rules.
+    flags = recorded_flags if llm_red_flags is None else llm_red_flags
+
     if mode == "deck_aware":
-        llm: CannedLLM | DeckAwareLLM = DeckAwareLLM(red_flags, delay)
+        llm: CannedLLM | DeckAwareLLM = DeckAwareLLM(flags, delay)
     else:
-        metrics, _, flags = _canned_payload()
-        llm = CannedLLM(metrics, memo, flags, delay)
+        metrics, _, canned_flags = _canned_payload()
+        llm = CannedLLM(metrics, memo, canned_flags, delay)
 
     # The memo must not claim a model ran when none did: the artefacts are stamped with
     # whatever `model_label()` returns, so point it at the truth for offline runs.
@@ -199,7 +212,7 @@ def install_stubs(delay: float = 0.0, mode: str = "canned") -> str:
 
     graph_module.get_llm = lambda *_, **__: llm  # type: ignore[assignment]
     graph_module.get_search_tool = lambda *_, **__: CannedSearchTool(  # type: ignore[assignment]
-        _market_blocks(), delay
+        blocks, delay
     )
     return mode
 

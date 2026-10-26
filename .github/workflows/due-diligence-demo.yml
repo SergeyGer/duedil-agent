@@ -1,0 +1,59 @@
+name: Due diligence demo
+
+# Dogfoods the composite action in this repository: a deck is analysed with the code from the
+# pull request, the memo is kept as an artifact and the summary is posted as a comment. It runs
+# only for changes to the action or the bundled decks, so ordinary code PRs stay quiet.
+#
+# No secrets are required: the action falls back to the rule-based agents when no LLM key is set.
+
+on:
+  pull_request:
+    paths:
+      - "action.yml"
+      - "scripts/action_entrypoint.sh"
+      - "examples/**"
+      - ".github/workflows/due-diligence-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: duedil-demo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  due-diligence:
+    name: Analyse a deck
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+
+      - name: Run the action from this checkout
+        id: duedil
+        uses: ./
+        with:
+          deck: examples/cursor_deck.pdf
+          url: https://cursor.com
+
+      - name: Upload the memo
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        with:
+          name: duedil-memo
+          path: |
+            ${{ steps.duedil.outputs.memo }}
+            ${{ steps.duedil.outputs.markdown }}
+            ${{ steps.duedil.outputs.comment }}
+
+      - name: Comment the summary on the pull request
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Update the comment this workflow posted last time instead of adding another copy on
+          # every push; `--edit-last` edits the most recent comment by the same author.
+          gh pr comment "$PR_NUMBER" --edit-last --body-file "${{ steps.duedil.outputs.comment }}" \
+            || gh pr comment "$PR_NUMBER" --body-file "${{ steps.duedil.outputs.comment }}"

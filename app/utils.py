@@ -202,7 +202,24 @@ def find_traffic_mentions(text: str) -> list[int]:
     return counts
 
 
+def deterministic_recommendation(state: dict[str, Any]) -> str:
+    """The recommendation the deterministic rules imply, independent of any model.
+
+    Used by the Supervisor's fallback memo, and as the fallback for the pull-request comment
+    when the memo does not state a verdict: a model can forget to name one, the rules cannot.
+    """
+
+    flags = state.get("red_flags") or []
+    status = (state.get("financial_benchmarks") or {}).get("status")
+    if not flags and status == "above":
+        return "INVEST"
+    if len(flags) >= 3 or status == "below":
+        return "REJECT"
+    return "DEEP AUDIT"
+
+
 __all__ = [
+    "deterministic_recommendation",
     "DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK",
     "is_missing",
     "parse_number",

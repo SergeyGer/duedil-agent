@@ -41,6 +41,8 @@ Commented-out entries in `env.example` are optional advanced switches.
 | `--md` | also write the raw Markdown memo here |
 | `--json` | dump the full final state to this JSON file |
 | `--model` | override the LLM id (e.g. claude-3-5-sonnet) |
+| `--comment-file` | write a short Markdown summary (recommendation, top Red Flags) here |
+| `--offline` | run the rule-based offline agents instead of an LLM (no API keys, no network) |
 | `--quiet` | only print the final memo |
 | `--version` | — |
 
@@ -48,6 +50,7 @@ Commented-out entries in `env.example` are optional advanced switches.
 
 | Script | Purpose |
 |---|---|
+| `scripts/action_entrypoint.sh` | Entry point for the DueDil.Agent composite action (`action.yml`). |
 | `scripts/capture_demo.py` | Capture screenshots and a walkthrough video of the Streamlit UI. |
 | `scripts/coverage_badge.py` | Generate a shields.io-style coverage badge from the ``.coverage`` data file. |
 | `scripts/demo_offline.py` | Run DueDil.Agent end-to-end with no API keys and no network. |
