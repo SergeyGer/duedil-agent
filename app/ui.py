@@ -21,11 +21,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import streamlit as st  # noqa: E402
 
+from app import display as _display
 from app.comment import recommendation_of
 from app.display import (
     benchmark_rows,
     metric_rows,
-    report_facts,  # noqa: E402
     state_summary,
     verdict_of,
 )
@@ -195,6 +195,28 @@ EN_FALLBACK: dict[str, str] = {
     "table_value": "Value",
     "recommendation_metric": "Recommendation",
 }
+
+
+def _report_facts(state: dict) -> list[tuple[str, str]]:
+    """Cover figures, or nothing when the loaded `app.display` predates them.
+
+    Streamlit Cloud can serve a new `app/ui.py` against a cached `app.display`; an import that
+    hard-fails turns a rolling deploy into an error page. Feature-detect instead.
+    """
+
+    function = getattr(_display, "report_facts", None)
+    return function(state) if callable(function) else []
+
+
+def _pdf_bytes(memo: str, model: str, company: str, recommendation: str, facts) -> bytes:
+    """Render the PDF, tolerating an older renderer signature during a rolling deploy."""
+
+    try:
+        return markdown_to_pdf_bytes(
+            memo, model=model, company=company, recommendation=recommendation, facts=facts
+        )
+    except TypeError:  # pragma: no cover - only reachable with a stale app.report
+        return markdown_to_pdf_bytes(memo, model=model)
 
 
 def _hero(t) -> None:
@@ -464,12 +486,12 @@ def main() -> None:
 
     st.download_button(
         t("download_pdf"),
-        data=markdown_to_pdf_bytes(
+        data=_pdf_bytes(
             memo,
-            model=state.get("used_model") or "",
-            company=str(metrics.get("company_name") or ""),
-            recommendation=recommendation_of(state),
-            facts=report_facts(state),
+            state.get("used_model") or "",
+            str(metrics.get("company_name") or ""),
+            recommendation_of(state),
+            _report_facts(state),
         ),
         file_name="duediligence_memo.pdf",
         mime="application/pdf",
