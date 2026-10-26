@@ -27,11 +27,22 @@ _RECOMMENDATION_RE = re.compile(r"\b(INVEST|DEEP AUDIT|REJECT)\b", re.IGNORECASE
 #: validated before it enters an artefact: an unexpected value must not be written as-is.
 _MODEL_LABEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 .,_()/+-]{0,63}$")
 
+#: Prefixes of credentials that must never be echoed into a memo, a comment or a JSON dump.
+_SECRET_PREFIXES = ("sk-", "sk_", "lsv2_", "tvly-", "llx-", "ghp_", "github_pat_")
+
 
 def safe_model_label(value: Any) -> str:
-    """Return the model label when it looks like one, otherwise ``"unknown"``."""
+    """Return the model label when it looks like one, otherwise ``"unknown"``.
+
+    ``DUE_DIL_MODEL`` is free-form, so someone can point it at a key by mistake. Anything that
+    looks like a credential, or that is not a plausible model id, is replaced instead of written.
+    """
 
     text = " ".join(str(value or "").split())
+    if not text or len(text) > 64:
+        return "unknown"
+    if text.lower().startswith(_SECRET_PREFIXES):
+        return "unknown"
     return text if _MODEL_LABEL_RE.match(text) else "unknown"
 
 
