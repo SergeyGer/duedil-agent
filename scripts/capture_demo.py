@@ -36,9 +36,9 @@ from playwright.sync_api import Page, sync_playwright
 # in English so the README reads consistently. Only the labels the runner has to find
 # are listed here.
 STRINGS: dict[str, str] = {
-    "run": "Run due diligence",
-    "download": "Download PDF",
-    "running": "Running the agent pipeline",
+    "run": "Analyse the deck",
+    "download": "Download the memo (PDF)",
+    "running": "Working through the deck",
 }
 
 SIDEBAR = 'section[data-testid="stSidebar"]'

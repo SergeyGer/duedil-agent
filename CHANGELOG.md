@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A narrated demo video** (`docs/media/demo.mp4`): a real session — sample deck, live run,
+  verdict, red flags, memo and the PDF — with a professional English voiceover, title and outro
+  cards. Reproducible with `scripts/make_demo_video.py` (records the session and the screenshots)
+  and `scripts/build_demo_video.py` (synthesises the narration, cuts the segments and muxes them).
+
+### Changed
+
+- **A landing screen for investors, not for engineers.** The first screen now says what the
+  product does and what the reader gets — "Investment due diligence in minutes", three value
+  cards, a three-step "How it works" — with no framework or vendor names anywhere in the UI
+  (a test enforces that). The run flow reads as a business process: *reading the figures*,
+  *checking claims against public sources*, *benchmarking revenue per employee*, *writing the
+  memo*. Results lead with the recommendation, the tables have real column headers, and the
+  step chips disappear once the analysis is done.
+- Screenshots in the README and the wiki were re-recorded from the new interface.
+
+### Fixed
+
+- **No more black boxes in the PDF.** ReportLab's built-in fonts only encode cp1252, so any
+  character outside it (Cyrillic names, arrows, emoji) was drawn as a tofu square. The renderer
+  now registers a real Unicode font (DejaVu Sans; installed in the container image, found on
+  macOS and Windows), maps typographic characters to plain equivalents (`→` → `->`), and strips
+  emoji before layout. `app/textsafe.py` holds the mapping; a test asserts the extracted text
+  contains nothing the font cannot draw.
+
 ## [0.3.0] - 2026-10-26
 
 ### Added

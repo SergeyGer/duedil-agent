@@ -34,3 +34,34 @@ def test_markdown_to_pdf_file(tmp_path):
     markdown_to_pdf(SAMPLE, str(out))
     assert out.exists()
     assert out.read_bytes().startswith(b"%PDF")
+
+
+def test_pdf_contains_no_unrenderable_glyphs(tmp_path):
+    """Regression: a memo with arrows, emoji and Cyrillic used to produce black boxes."""
+
+    from app.fonts import register_pdf_fonts
+    from app.parser import parse_pdf_to_markdown
+    from app.textsafe import sanitize_for_pdf, unsupported_characters
+
+    memo = (
+        "# Investment Memo — Пример\n\n"
+        "## 1. Executive Summary\n\n"
+        "Growth 300% → 400% ✅ with ARR ≈ $1.2M 🚀 and team ≥ 14.\n"
+        "Привет — это проверка кириллицы.\n\n"
+        "| Metric | Value |\n|---|---|\n| ARR | $1.2M → $4M |\n"
+    )
+    unicode_fonts = register_pdf_fonts()[3]
+
+    path = tmp_path / "memo.pdf"
+    markdown_to_pdf(memo, str(path), model="gpt-4o (OpenAI)")
+    extracted = parse_pdf_to_markdown(path)
+
+    assert "->" in extracted, "the arrow must be replaced by its plain equivalent"
+    assert "🚀" not in extracted, "emoji must not reach the PDF"
+    assert unsupported_characters(extracted, unicode_font=unicode_fonts) == set(), (
+        "every character left in the PDF must be renderable by the font in use"
+    )
+    assert sanitize_for_pdf(extracted, unicode_font=unicode_fonts) == extracted
+
+    if unicode_fonts:
+        assert "Привет" in extracted, "a Unicode font must keep Cyrillic readable"

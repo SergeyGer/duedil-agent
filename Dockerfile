@@ -55,6 +55,12 @@ COPY --from=builder /wheels /wheels
 RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* \
     && rm -rf /wheels
 
+# DejaVu Sans gives the PDF renderer Latin, Greek and Cyrillic coverage. Without it ReportLab
+# falls back to its built-in Type-1 fonts and anything outside cp1252 renders as a black box.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 # Non-root runtime user; /app/data is the writable directory for generated memos.
 RUN useradd --create-home --home-dir /app --shell /usr/sbin/nologin --uid 10001 duedil \
     && mkdir -p /app/data \

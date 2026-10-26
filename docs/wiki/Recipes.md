@@ -38,7 +38,7 @@ the repository root; Windows equivalents are in the second column where they dif
 | Regenerate the generated reference page | `make wiki-reference` |
 | Publish the wiki | `./scripts/publish_wiki.sh` |
 | Regenerate the personal Run & Stop guide | `make devcontainer-doc` (Russian), `make devcontainer-doc-en` |
-| Re-record the demo video and screenshots | `python scripts/capture_demo.py --example Cursor --video-out docs/media/demo-offline.webm` |
+| Re-record the screenshots and the demo video | `python scripts/make_demo_video.py --base-url http://127.0.0.1:8511`, then `python scripts/build_demo_video.py --capture /tmp/duedil-capture --ffmpeg $(python -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())")` |
 
 ## Operate and debug
 

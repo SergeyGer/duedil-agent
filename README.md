@@ -37,19 +37,23 @@ how it is built.
 
 ## See it work
 
-A real run — five agents, two passes of critical re-verification, and a memo that ends in
-**REJECT** because the deck does not survive scrutiny. No upload needed: the sidebar offers
-**five bundled example decks** behind the sidebar's *Browse examples* button, and the run summary
-states which model produced the analysis:
+A real run — upload the deck, the analysis runs, and the memo ends in **REJECT** because the
+company does not survive scrutiny. No upload needed to try it: five example decks ship with the
+app behind *or open a sample deck*.
 
-<video src="docs/media/demo-offline.mp4" controls width="820"></video>
+<video src="docs/media/demo.mp4" controls width="820"></video>
 
-[▶ watch the 22-second walkthrough](docs/media/demo-offline.mp4) ·
-[the same pipeline against real APIs (47 s)](docs/media/demo-live.mp4)
+[▶ watch the one-minute narrated demo](docs/media/demo.mp4) — a live run on the Lovable deck,
+with the voiceover describing what each step does.
 
-| Pick a deck (or upload one) | Agents work through it | Out come the metrics, the verdict and the memo |
+| Start: what you get, and how it works | The analysis runs | The verdict, the numbers and the red flags |
 |---|---|---|
-| ![Idle UI](docs/media/ui-idle-en.png) | ![Pipeline running](docs/media/ui-running.png) | ![Result](docs/media/ui-results-en.png) |
+| ![Start screen](docs/media/ui-idle-en.png) | ![Analysis running](docs/media/ui-running.png) | ![Results](docs/media/ui-results-en.png) |
+
+Red flags are stated in full, not as a score — each one names the claim and the evidence that
+contradicts it:
+
+![Red flags](docs/media/ui-redflags-en.png)
 
 The results are rendered for a reader, not for a machine: metrics and the financial audit as
 tables, missing figures labelled `— (not in the deck)`, and the audit's conclusion in its own
