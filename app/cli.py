@@ -190,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
             # validated and credential shapes are redacted. A taint tracker still follows the
             # label from `DUE_DIL_MODEL` into this file, which is why the write is suppressed —
             # `tests/test_redact.py` and `tests/test_comment.py` assert what can reach it.
-            redact_secrets(build_comment(state)),  # lgtm[py/clear-text-storage-sensitive-data]
+            redact_secrets(build_comment(state)),  # codeql[py/clear-text-storage-sensitive-data]
             encoding="utf-8",
             newline="\n",
         )
