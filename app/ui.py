@@ -158,6 +158,32 @@ def _browse_examples_dialog() -> None:
             st.rerun()
 
 
+#: English copy for the keys this module asks for, used only when the loaded translation table
+#: is older than the code (a hot reload can leave a stale `app.i18n` module behind, and a
+#: deployment can serve the new UI before the new strings). A raw `hero_title` on screen is
+#: worse than a slightly stale sentence.
+EN_FALLBACK: dict[str, str] = {
+    "hero_title": "Investment due diligence in minutes",
+    "hero_subtitle": (
+        "Upload a pitch deck and get the memo an analyst would write: a clear recommendation, "
+        "the company's numbers against a market benchmark, and the risks that survived "
+        "verification."
+    ),
+    "value_1_title": "Deck in, memo out",
+    "value_2_title": "Numbers, benchmarked",
+    "value_3_title": "Risks, not vibes",
+    "how_header": "How it works",
+    "how_steps": (
+        "1. Upload the pitch deck and the company website.\n"
+        "2. The claims are checked against public sources and the financials are benchmarked.\n"
+        "3. Read the memo on screen or download it as a PDF."
+    ),
+    "table_metric": "Metric",
+    "table_value": "Value",
+    "recommendation_metric": "Recommendation",
+}
+
+
 def _hero(t) -> None:
     """The landing block: purpose, outcome and the three things a reader gets."""
 
@@ -198,7 +224,9 @@ def main() -> None:
         lang = _language_selector()
 
     def t(key: str, **kwargs) -> str:
-        return translate(lang, key, **kwargs)
+        text = translate(lang, key, **kwargs)
+        # `translate` returns the key itself when a table has no entry for it; never show that.
+        return EN_FALLBACK.get(key, text) if text == key else text
 
     with st.sidebar:
         st.header(t("sidebar_header"))
