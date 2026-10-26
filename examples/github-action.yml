@@ -1,0 +1,49 @@
+# Due diligence on every deck change.
+#
+# Copy this file to `.github/workflows/duedil.yml` in your repository and adjust `deck`/`url`.
+# The action writes the memo and a short summary; posting the comment stays here, so the action
+# itself needs no token or `pull-requests: write` permission.
+name: Due diligence
+
+on:
+  pull_request:
+    paths:
+      - "decks/**"
+      - "**/*.pdf"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  memo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
+
+      - name: Analyse the deck
+        id: duedil
+        uses: SergeyGer/duedil-agent@v0.3.0
+        with:
+          deck: decks/acme.pdf
+          url: https://acme.example
+          # Without OPENAI_API_KEY/ANTHROPIC_API_KEY the rule-based agents run instead, so the
+          # workflow works in a repository with no secrets. Force either behaviour with
+          # offline: true | false.
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Keep the memo
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
+        with:
+          name: duedil-memo
+          path: ${{ steps.duedil.outputs.memo }}
+
+      - name: Comment the verdict on the pull request
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body-file "${{ steps.duedil.outputs.comment }}"

@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The repository is a GitHub Action** (`action.yml`): point it at a pitch deck and it writes the
+  PDF memo, the Markdown memo, the full state JSON and a short Markdown summary sized for a pull
+  request. A workflow can post that summary with `gh pr comment --body-file` and keep the memo as
+  an artifact.
+  - `offline: auto` (the default) falls back to the rule-based agents when neither
+    `OPENAI_API_KEY` nor `ANTHROPIC_API_KEY` is set, so the action works in a repository with no
+    secrets and never pretends a model ran.
+  - The action installs its own pinned `requirements.txt`, so a consumer's lockfile cannot change
+    the analysis, and it writes files only — commenting stays in the caller's workflow, which is
+    why the action needs no token.
+  - `scripts/action_entrypoint.sh` maps inputs to the CLI, resolves paths, publishes `$GITHUB_OUTPUT`
+    and appends the summary to `$GITHUB_STEP_SUMMARY`.
+  - `examples/github-action.yml` is a copyable workflow; this repository dogfoods the action in
+    `.github/workflows/due-diligence-demo.yml`, which comments on pull requests that touch a deck
+    or the action.
+- **`duedil --comment-file FILE`** writes the same short summary from the CLI, and
+  **`duedil --offline`** runs the rule-based agents on any deck without keys or network — with no
+  canned market notes, so the memo never quotes evidence about a different company.
+- `tests/test_comment.py` and `tests/test_github_action.py` pin the summary format, the action's
+  interface (inputs, outputs, SHA-pinned `uses`) and the workflows that demonstrate it.
+
 ### Changed
 
 - The README roadmap and the wiki's extension notes now link to the GitHub issues that track

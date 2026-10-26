@@ -24,6 +24,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from app import __version__
+from app.comment import build_comment
 from app.config import model_label
 from app.graph import build_graph
 from app.parser import ParserError, parse_pdf_to_markdown
@@ -37,6 +38,25 @@ NODE_LABELS = {
     "agent_critic": "Critic      — cross-checking claims & Red Flags",
     "agent_supervisor": "Supervisor  — assembling the deal memo",
 }
+
+
+def _install_offline() -> None:
+    """Swap in the rule-based agents used by the hosted demo: no keys, no network.
+
+    The stubs live in ``scripts/demo_offline.py`` because the Streamlit app imports them the
+    same way; reusing them keeps one definition of "offline" instead of two behaviours that
+    drift apart.
+    """
+
+    scripts_dir = Path(__file__).resolve().parents[1] / "scripts"
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+
+    from demo_offline import install_stubs
+
+    # No canned market notes: the deck may be any company, and quoting another one is
+    # worse than admitting there is no external evidence at all.
+    install_stubs(mode="deck_aware", market_blocks=[], llm_red_flags=[])
 
 
 def _slugify(text: str) -> str:
@@ -70,6 +90,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--json", dest="json_out", help="dump the full final state to this JSON file"
     )
     parser.add_argument("--model", help="override the LLM id (e.g. claude-3-5-sonnet)")
+    parser.add_argument(
+        "--comment-file",
+        dest="comment_out",
+        help="write a short Markdown summary (recommendation, top Red Flags) here",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="run the rule-based offline agents instead of an LLM (no API keys, no network)",
+    )
     parser.add_argument("--quiet", action="store_true", help="only print the final memo")
     parser.add_argument("--version", action="version", version=f"duedil {__version__}")
     return parser
@@ -84,7 +114,9 @@ def main(argv: list[str] | None = None) -> int:
         print("\nerror: a pitch deck PDF path is required.", file=sys.stderr)
         return 2
 
-    if args.model:
+    if args.offline:
+        _install_offline()
+    elif args.model:
         os.environ["DUE_DIL_MODEL"] = args.model
 
     deck_path = Path(args.deck)
@@ -99,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     log("DueDil.Agent")
     log(f"  deck  : {deck_path}")
     log(f"  url   : {args.url or '(not provided)'}")
-    log(f"  model : {model_label()}")
+    log(f"  model : {'offline rules, deck_aware (no model)' if args.offline else model_label()}")
     log("")
 
     log("[1/2] Parsing PDF -> Markdown ...")
@@ -149,6 +181,10 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.md_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.md_out).write_text(memo, encoding="utf-8", newline="\n")
 
+    if args.comment_out:
+        Path(args.comment_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.comment_out).write_text(build_comment(state), encoding="utf-8", newline="\n")
+
     if args.json_out:
         Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.json_out).write_text(
@@ -164,6 +200,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"PDF memo  : {out_path}")
         if args.md_out:
             print(f"Markdown  : {args.md_out}")
+        if args.comment_out:
+            print(f"PR comment: {args.comment_out}")
         if args.json_out:
             print(f"State JSON: {args.json_out}")
 

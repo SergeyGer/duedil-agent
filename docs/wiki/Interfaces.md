@@ -1,7 +1,7 @@
 # Interfaces
 
-Three surfaces, one graph. The UI, the CLI and the library entry point all build the same
-compiled graph, so behaviour cannot drift between them.
+Four surfaces, one graph. The UI, the CLI, the library entry point and the GitHub Action all
+build the same compiled graph, so behaviour cannot drift between them.
 
 ## Streamlit UI
 
@@ -122,6 +122,47 @@ for deck in decks/*.pdf; do
   python -m app.cli "$deck" --quiet > "${deck%.pdf}.md"
 done
 ```
+
+## GitHub Action
+
+`action.yml` at the repository root wraps the CLI, so a workflow can analyse a deck without
+writing any Python.
+
+```yaml
+- uses: SergeyGer/duedil-agent@v0.3.0
+  id: duedil
+  with:
+    deck: decks/acme.pdf
+    url: https://acme.example
+```
+
+| Input | Default | Purpose |
+|---|---|---|
+| `deck` | — (required) | Path to the PDF, relative to the repository root |
+| `url` | `""` | Startup website used for the market-data search |
+| `output-dir` | `duedil-output` | Where the artefacts are written (relative or absolute) |
+| `model` | `""` | LLM id override, ignored in offline runs |
+| `offline` | `auto` | `auto` runs the rule-based agents when no LLM key is present; `true`/`false` force it |
+| `python-version` | `3.12` | Interpreter for the pipeline |
+| `install-dependencies` | `true` | Install the action's pinned `requirements.txt` |
+
+| Output | Contents |
+|---|---|
+| `memo` | Absolute path to the PDF memo |
+| `markdown` | Absolute path to the Markdown memo |
+| `comment` | Short Markdown summary, ready for `gh pr comment --body-file` |
+| `state` | Full final state as JSON |
+| `recommendation` | `INVEST`, `DEEP AUDIT` or `REJECT` |
+
+Two deliberate constraints:
+
+* **The action writes files, it does not post them.** Commenting stays in the caller's workflow,
+  so the action needs no token and no `pull-requests: write` permission.
+* **The dependencies are the action's own** (`requirements.txt` next to `action.yml`), not the
+  caller's, so a consumer's lockfile cannot change the analysis.
+
+The summary is also appended to `$GITHUB_STEP_SUMMARY`, so the verdict is visible in the run
+without opening the pull request. `--comment-file` produces the same text from the CLI.
 
 ## Python API
 

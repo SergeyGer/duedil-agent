@@ -1,0 +1,90 @@
+name: "DueDil Agent — investment memo for a pitch deck"
+description: >-
+  Runs the DueDil.Agent pipeline on a pitch deck and writes an investment memo (PDF + Markdown),
+  a short summary you can post on a pull request, and the full state as JSON.
+author: "Sergey Gerasimov"
+branding:
+  icon: "file-text"
+  color: "blue"
+
+inputs:
+  deck:
+    description: "Path to the pitch deck PDF, relative to the repository root."
+    required: true
+  url:
+    description: "The startup's website; used for the market-data search."
+    required: false
+    default: ""
+  output-dir:
+    description: "Directory the generated files are written to, relative to the workspace."
+    required: false
+    default: "duedil-output"
+  model:
+    description: "Override the LLM id, e.g. gpt-4o or claude-3-5-sonnet."
+    required: false
+    default: ""
+  offline:
+    description: >-
+      auto | true | false. `auto` (the default) runs the rule-based agents when neither
+      OPENAI_API_KEY nor ANTHROPIC_API_KEY is set, so the action works without secrets.
+    required: false
+    default: "auto"
+  python-version:
+    description: "Python version used to run the pipeline."
+    required: false
+    default: "3.12"
+  install-dependencies:
+    description: >-
+      Install the pinned requirements.txt from the action (set to false only if the workflow
+      already installed them).
+    required: false
+    default: "true"
+
+outputs:
+  memo:
+    description: "Absolute path to the generated PDF memo."
+    value: ${{ steps.run.outputs.memo }}
+  markdown:
+    description: "Absolute path to the Markdown memo."
+    value: ${{ steps.run.outputs.markdown }}
+  comment:
+    description: >-
+      Absolute path to a short Markdown summary (recommendation, top Red Flags, benchmark) —
+      ready for `gh pr comment --body-file`.
+    value: ${{ steps.run.outputs.comment }}
+  state:
+    description: "Absolute path to the full final state as JSON."
+    value: ${{ steps.run.outputs.state }}
+  recommendation:
+    description: "The verdict: INVEST, DEEP AUDIT or REJECT."
+    value: ${{ steps.run.outputs.recommendation }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: ${{ github.action_path }}/requirements.txt
+
+    # The lockfile ships with the action, not with the caller's repository, so the analysis runs
+    # on exactly the dependency set this release was tested with.
+    - name: Install the pinned dependencies
+      if: ${{ inputs.install-dependencies == 'true' }}
+      shell: bash
+      run: |
+        python -m pip install --disable-pip-version-check --quiet \
+          -r "$GITHUB_ACTION_PATH/requirements.txt"
+
+    - name: Run the due-diligence pipeline
+      id: run
+      shell: bash
+      env:
+        INPUT_DECK: ${{ inputs.deck }}
+        INPUT_URL: ${{ inputs.url }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_OFFLINE: ${{ inputs.offline }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/action_entrypoint.sh"

@@ -268,6 +268,46 @@ prints its sources on its last page.
 
 ---
 
+## Use it in CI
+
+The repository is also a **GitHub Action**: point it at a deck and it writes the memo, a short
+summary and the full state, so a pull request can carry the analysis.
+
+```yaml
+- uses: SergeyGer/duedil-agent@v0.3.0
+  id: duedil
+  with:
+    deck: decks/acme.pdf          # relative to the repository root
+    url: https://acme.example
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # optional
+
+- uses: actions/upload-artifact@v7
+  with:
+    name: duedil-memo
+    path: ${{ steps.duedil.outputs.memo }}
+
+- env:
+    GH_TOKEN: ${{ github.token }}
+  run: gh pr comment ${{ github.event.pull_request.number }} --body-file "${{ steps.duedil.outputs.comment }}"
+```
+
+With no key in `env`, the action runs the rule-based agents and says so in the memo — the
+workflow works in a repository with no secrets, and the result never pretends a model ran.
+[`examples/github-action.yml`](examples/github-action.yml) is a complete workflow to copy, and
+this repository dogfoods the action in
+[`due-diligence-demo.yml`](.github/workflows/due-diligence-demo.yml).
+
+| Output | Contents |
+|---|---|
+| `memo` | PDF memo |
+| `markdown` | the memo as Markdown |
+| `comment` | short summary — verdict, top Red Flags, benchmark — ready for `gh pr comment` |
+| `state` | the full final state as JSON |
+| `recommendation` | `INVEST`, `DEEP AUDIT` or `REJECT` |
+
+---
+
 ## Roadmap
 
 Work is tracked in [Issues](https://github.com/SergeyGer/duedil-agent/issues) — the list below is

@@ -32,6 +32,7 @@ from .tools import get_search_tool, stringify_search_results
 from .utils import (
     DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK,
     compute_financials,
+    deterministic_recommendation,
     find_team_mentions,
     find_traffic_mentions,
     is_missing,
@@ -297,13 +298,7 @@ def route_after_critic(state: VentureState) -> str:
 def _recommendation(state: VentureState) -> str:
     """Deterministic fallback recommendation used for the context/fallback."""
 
-    flags = state.get("red_flags") or []
-    status = (state.get("financial_benchmarks") or {}).get("status")
-    if not flags and status == "above":
-        return "INVEST"
-    if len(flags) >= 3 or status == "below":
-        return "REJECT"
-    return "DEEP AUDIT"
+    return deterministic_recommendation(state)
 
 
 def _build_context(state: VentureState) -> str:
