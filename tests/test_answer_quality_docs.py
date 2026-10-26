@@ -41,7 +41,7 @@ CITED = [
     ("app/config.py", 44, "def _cached_llm"),
     ("app/config.py", 55, "def get_llm"),
     ("app/offline_agents.py", 243, "def extract_metrics"),
-    ("app/offline_agents.py", 383, "class OfflineSupervisorLLM"),
+    ("app/offline_agents.py", 454, "class OfflineSupervisorLLM"),
     ("pyproject.toml", 101, "fail_under"),
 ]
 

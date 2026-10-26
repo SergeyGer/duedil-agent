@@ -22,9 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import streamlit as st  # noqa: E402
 
 from app.comment import recommendation_of
-from app.display import (  # noqa: E402
+from app.display import (
     benchmark_rows,
     metric_rows,
+    report_facts,  # noqa: E402
     state_summary,
     verdict_of,
 )
@@ -221,6 +222,38 @@ def _hero(t) -> None:
     st.markdown(t("how_steps"))
 
 
+def _memo_sections(memo: str) -> list[tuple[str, str]]:
+    """Split the memo at level-2 headings into ``(heading, body)`` pairs."""
+
+    sections: list[tuple[str, str]] = []
+    heading, body = "", []
+    for line in (memo or "").splitlines():
+        if line.startswith("## "):
+            if heading or body:
+                sections.append((heading, "\n".join(body).strip()))
+            heading, body = line[3:].strip(), []
+        elif heading:
+            body.append(line)
+    if heading or body:
+        sections.append((heading, "\n".join(body).strip()))
+    return [(head, text) for head, text in sections if head or text]
+
+
+def _render_memo(memo: str, t) -> None:
+    """Render the memo, keeping the long market-analysis prose behind a disclosure.
+
+    The verdict, the metrics and the red flags are what a reader needs; the market section is
+    the part people open when they want to check the reasoning.
+    """
+
+    for heading, body in _memo_sections(memo):
+        if "market analysis" in heading.lower():
+            with st.expander(heading or "Market analysis", expanded=False):
+                st.markdown(_literal(body))
+        else:
+            st.markdown(_literal(f"{heading}\n\n{body}".strip() if heading else body))
+
+
 def _chosen_example_name() -> str | None:
     return st.session_state.get("chosen_example")
 
@@ -270,7 +303,17 @@ def main() -> None:
             value=EXAMPLE_URLS.get(chosen_file or "", ""),
             placeholder=t("url_placeholder"),
         )
-        run = st.button(t("run_button"), key="run_button", type="primary", use_container_width=True)
+        has_deck = uploaded is not None or bool(
+            chosen_file and (_examples_dir() / chosen_file).is_file()
+        )
+        run = st.button(
+            t("run_button"),
+            key="run_button",
+            type="primary",
+            use_container_width=True,
+            disabled=not has_deck,
+            help=None if has_deck else t("err_no_deck"),
+        )
         st.divider()
         st.caption(t("keys_caption"))
 
@@ -281,10 +324,13 @@ def main() -> None:
         st.info(t("idle_hint"))
         return
 
-    st.subheader(t("progress_header"))
-    step_slots = {node: st.empty() for node in NODE_LABEL_KEYS}
-    for node, slot in step_slots.items():
-        slot.info(f"⏳ {t(NODE_LABEL_KEYS[node])}")
+    # The step-by-step detail is there for readers who want it, collapsed by default: the result
+    # is what most people came for.
+    with st.expander(t("progress_header")):
+        details = st.container()
+        step_slots = {node: st.empty() for node in NODE_LABEL_KEYS}
+        for node, slot in step_slots.items():
+            slot.info(f"⏳ {t(NODE_LABEL_KEYS[node])}")
 
     deck_bytes: bytes | None = None
     if uploaded is not None:
@@ -297,7 +343,7 @@ def main() -> None:
         if deck_bytes is None:
             st.error(t("err_parse", error=f"{chosen_file} is not available in this deployment"))
             return
-        st.info(f"📄 {chosen_file}")
+        details.info(f"📄 {chosen_file}")
 
     if not deck_bytes:
         st.error(t("err_no_deck"))
@@ -309,7 +355,7 @@ def main() -> None:
         except ParserError as exc:
             st.error(t("err_parse", error=exc))
             return
-    st.success(t("ok_parsed", count=len(deck_text)))
+    details.success(t("ok_parsed", count=len(deck_text)))
 
     offline_mode = _offline_mode()
     if offline_mode:
@@ -317,7 +363,15 @@ def main() -> None:
         sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
         from demo_offline import install_stubs
 
-        install_stubs(delay=float(os.getenv("DUE_DIL_DEMO_DELAY", "0")), mode=offline_mode)
+        # `deck_aware` reads the deck it is given, so the canned market notes (recorded for a
+        # different company) must not be mixed in: they produced flags about NimbusAI in a
+        # Cursor memo. The recorded `canned` mode keeps them on purpose.
+        extra = {"market_blocks": [], "llm_red_flags": []} if offline_mode == "deck_aware" else {}
+        install_stubs(
+            delay=float(os.getenv("DUE_DIL_DEMO_DELAY", "0")),
+            mode=offline_mode,
+            **extra,
+        )
 
     graph = build_graph()
     state = initial_state(deck_text, website_url)
@@ -336,16 +390,13 @@ def main() -> None:
         return
 
     if offline_mode:
-        st.warning(t("offline_notice"))
+        # A detail of how the run was produced, not a headline: the reader asked for a memo,
+        # and the memo states its own provenance in the summary.
+        details.warning(t("offline_notice"))
 
     metrics = state.get("extracted_metrics") or {}
     benchmarks = state.get("financial_benchmarks") or {}
     flags = state.get("red_flags") or []
-
-    # The step-by-step chips did their job while the analysis ran; keeping them on screen
-    # afterwards pushes the result below the fold.
-    for slot in step_slots.values():
-        slot.empty()
 
     # --- what ran, and what came out of it ---------------------------------
     st.subheader(t("summary_header"))
@@ -409,11 +460,17 @@ def main() -> None:
         st.success(t("no_redflags"))
 
     st.subheader(t("memo_header"))
-    st.markdown(_literal(memo))
+    _render_memo(memo, t)
 
     st.download_button(
         t("download_pdf"),
-        data=markdown_to_pdf_bytes(memo, model=state.get("used_model") or ""),
+        data=markdown_to_pdf_bytes(
+            memo,
+            model=state.get("used_model") or "",
+            company=str(metrics.get("company_name") or ""),
+            recommendation=recommendation_of(state),
+            facts=report_facts(state),
+        ),
         file_name="duediligence_memo.pdf",
         mime="application/pdf",
         type="primary",

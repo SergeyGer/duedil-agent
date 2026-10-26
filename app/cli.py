@@ -24,8 +24,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from app import __version__
-from app.comment import build_comment
+from app.comment import build_comment, recommendation_of
 from app.config import model_label
+from app.display import report_facts
 from app.graph import build_graph
 from app.parser import ParserError, parse_pdf_to_markdown
 from app.redact import redact_secrets, redact_state
@@ -174,7 +175,15 @@ def main(argv: list[str] | None = None) -> int:
     company = (state.get("extracted_metrics") or {}).get("company_name") or "startup"
     out_path = Path(args.out) if args.out else Path("data") / f"{_slugify(company)}_memo.pdf"
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    markdown_to_pdf(memo, str(out_path), model=state.get("used_model") or model_label())
+    company = (state.get("extracted_metrics") or {}).get("company_name") or ""
+    markdown_to_pdf(
+        memo,
+        str(out_path),
+        model=state.get("used_model") or model_label(),
+        company=str(company),
+        recommendation=recommendation_of(state),
+        facts=report_facts(state),
+    )
 
     # `newline="\n"` keeps the generated artefacts LF-only on Windows, matching
     # `.gitattributes` (`eol=lf`) and the pre-commit `mixed-line-ending` hook.
