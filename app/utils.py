@@ -174,10 +174,6 @@ _TRAFFIC_RE_REVERSED = re.compile(
 
 _STATED_TEAM_RE = re.compile(r"team\s*size\s*[:=-]?\s*(\d{1,6})", re.IGNORECASE)
 
-#: A LinkedIn-style range ("51-200 employees") describes a band, and its upper bound is not the
-#: headcount: reading 200 there made a 50-person company look four times larger.
-_TEAM_RANGE_RE = re.compile(r"(\d{1,5})\s*[-–]\s*(\d{1,5})\s*employees?", re.IGNORECASE)
-
 
 def find_stated_team_size(text: str) -> int | None:
     """Return an explicitly stated headcount ("Team Size: 50"), or ``None``.
