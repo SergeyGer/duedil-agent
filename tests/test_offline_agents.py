@@ -215,3 +215,31 @@ def test_the_offline_memo_reads_like_a_report_not_like_a_deck_dump():
     assert "**INVEST**" in memo
     assert "Business model: Business model" not in memo
     assert "$100,000" in memo
+
+
+def test_company_names_come_from_the_body_or_the_file_name():
+    """Regression: blueprint decks produced memos about a company called "SLIDE 1"."""
+
+    from app.offline_agents import company_from_filename, extract_company_name
+
+    blueprint = (
+        "STRICTLY CONFIDENTIAL // VENTURE PITCH DECK BLUEPRINT\n"
+        "# SLIDE 1: Vision / Category Definition\n"
+        "**Core Investor Message:** a new category.\n"
+        "## VISUAL BLUEPRINT & WIREFRAME LAYOUT\n"
+    )
+    assert extract_company_name(blueprint, "Figure_AI_Pitch_Deck.pdf") == "Figure AI"
+    assert extract_company_name(blueprint) == "Unknown Startup"
+
+    body = blueprint + "\nArtisan builds fully autonomous digital workers.\n"
+    assert extract_company_name(body, "figures.pdf") == "Artisan"
+
+    assert company_from_filename("TensorWave_Pitch_Deck.pdf") == "TensorWave"
+    assert company_from_filename("cursor_deck.pdf") == "Cursor"
+
+
+def test_a_slide_heading_is_never_a_company_name():
+    from app.offline_agents import extract_company_name
+
+    for heading in ("# SLIDE 1: Vision", "# SLIDE 3: Financials", "STRICTLY CONFIDENTIAL"):
+        assert extract_company_name(heading, "") == "Unknown Startup"

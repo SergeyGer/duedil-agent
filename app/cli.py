@@ -146,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
 
     log("[2/2] Running the agent graph:")
     graph = build_graph()
-    state = initial_state(deck_text, args.url)
+    state = initial_state(deck_text, args.url, deck_path.name)
     try:
         for chunk in graph.stream(state, stream_mode="updates"):
             for node, payload in (chunk or {}).items():

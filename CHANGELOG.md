@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The memo names the company, not the slide.** Blueprint decks carry no company in their title,
+  so the offline extractor took the first heading and produced memos about a company called
+  "SLIDE 1" (or "STRICTLY CONFIDENTIAL // VENTURE"). It now prefers an explicit `Company:` field,
+  then a sentence that names the company and says what it does ("Artisan builds …"), then the file
+  name — which is why the deck's name now travels with the run (`deck_name` in the state, passed
+  by the CLI and the UI) — and never accepts a heading that describes the document.
+
 ### Changed
 
 - Money is formatted with its currency and two decimals — `$333,333.33`, `€333,333.33` — in the
