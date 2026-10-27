@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "duedil-agent"
-version = "0.3.0"
+version = "0.4.0"
 description = "Autonomous multi-agent due-diligence system (LangGraph) for technology startups."
 readme = "README.md"
 requires-python = ">=3.11"
