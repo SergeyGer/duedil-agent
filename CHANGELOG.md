@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Money is formatted with its currency and two decimals — `$333,333.33`, `€333,333.33` — in the
+  dashboard, the report cover, the verdict and the pull-request summary. The currency follows the
+  deck (`€`, `£`, `¥`), falling back to dollars only when the deck states none.
+- The hosted app hides Streamlit's Deploy/Fork toolbar; the interface is the product.
+
+### Fixed
+
+- The report is regenerated in the new layout on the hosted app: a deployment could serve the new
+  UI against a cached `app/report.py`, and the compatibility fallback then rendered the old memo.
+
 ## [0.4.0] - 2026-10-27
 
 ### Added

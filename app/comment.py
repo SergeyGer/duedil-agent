@@ -13,7 +13,7 @@ import re
 from typing import Any
 
 from app import utils
-from app.display import format_metric_value, format_money
+from app.display import currency_of, format_metric_value, format_money
 
 #: How many Red Flags fit in a comment before it stops being skimmable.
 MAX_FLAGS = 3
@@ -96,7 +96,8 @@ def _score_row(state: dict[str, Any]) -> str:
         return "| ARR / employee | — (not computable) |"
     benchmark = benchmarks.get("benchmark_arr_per_employee")
     status = _STATUS_TEXT.get(str(benchmarks.get("status") or "unknown"), "not computable")
-    benchmark_cell = f"${benchmark:,}" if isinstance(benchmark, (int, float)) else "—"
+    currency = currency_of(state.get("extracted_metrics") or {})
+    benchmark_cell = f"{currency}{benchmark:,.2f}" if isinstance(benchmark, (int, float)) else "—"
     return f"| ARR / employee | {format_money(per_employee)} ({status} of {benchmark_cell}) |"
 
 

@@ -26,6 +26,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 
 from .config import get_llm, model_label
+from .display import currency_of
 from .prompts import CRITIC_SYSTEM, EXTRACTOR_SYSTEM, SUPERVISOR_SYSTEM
 from .state import VentureState, initial_state
 from .tools import get_search_tool, stringify_search_results
@@ -192,7 +193,9 @@ def agent_financial(state: VentureState) -> dict:
             sourced_team_size = str(mentions[len(mentions) // 2])
             metrics["team_size"] = sourced_team_size
 
-    benchmarks = compute_financials(metrics, DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK)
+    benchmarks = compute_financials(
+        metrics, DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK, currency_of(metrics)
+    )
     if sourced_team_size:
         benchmarks["team_size_source"] = "external"
         benchmarks["verdict"] = (

@@ -101,6 +101,7 @@ def parse_count(value: Any) -> int | None:
 def compute_financials(
     metrics: dict[str, Any],
     benchmark: int = DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK,
+    currency: str = "$",
 ) -> dict[str, Any]:
     """Compute ARR / team_size and compare it with the SaaS benchmark."""
 
@@ -135,14 +136,14 @@ def compute_financials(
     if per_employee >= benchmark:
         result["status"] = "above"
         result["verdict"] = (
-            f"Healthy: ARR/employee of ${per_employee:,.0f} exceeds the B2B SaaS "
-            f"benchmark of ${benchmark:,.0f}."
+            f"Healthy: ARR/employee of {currency}{per_employee:,.2f} exceeds the B2B SaaS "
+            f"benchmark of {currency}{benchmark:,.2f}."
         )
     else:
         result["status"] = "below"
         result["verdict"] = (
-            f"Weak: ARR/employee of ${per_employee:,.0f} sits below the B2B SaaS "
-            f"benchmark of ${benchmark:,.0f}."
+            f"Weak: ARR/employee of {currency}{per_employee:,.2f} sits below the B2B SaaS "
+            f"benchmark of {currency}{benchmark:,.2f}."
         )
     return result
 

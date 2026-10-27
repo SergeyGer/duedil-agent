@@ -35,8 +35,11 @@ BENCHMARKS = {
 
 
 def test_format_money_rounds_and_groups():
-    assert format_money(1_200_000.0) == "$1,200,000"
-    assert format_money(85_714.2857) == "$85,714"
+    # Two decimals and an explicit currency: a reader compares these figures with the memo,
+    # and "333333.33" without a currency sign is ambiguous.
+    assert format_money(1_200_000.0) == "$1,200,000.00"
+    assert format_money(85_714.2857) == "$85,714.29"
+    assert format_money(333_333.33, "€") == "€333,333.33"
     assert format_money(None) == "—"
 
 
@@ -98,7 +101,7 @@ def test_benchmark_rows_do_not_contain_the_verdict():
 
 def test_benchmark_rows_are_readable():
     rows = {row["metric"]: row["value"] for row in benchmark_rows(BENCHMARKS)}
-    assert rows["ARR per employee"] == "$85,714"
+    assert rows["ARR per employee"] == "$85,714.29"
     assert rows["Against the benchmark"] == "0.86× the benchmark"
 
 
