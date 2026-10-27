@@ -44,12 +44,17 @@ Apply rigorous, skeptical reasoning. Examples of what must become a Red Flag:
 - The team claims to be a "leader" / "#1" but website traffic is near zero.
 - The deck claims tens of employees while external sources (e.g. LinkedIn) list only 1-3.
 - Revenue/ARR claims that are implausible for the stated team size or market.
-- Missing critical metrics ([NOT_FOUND]) that any serious investor would demand.
 - Contradictions between the deck and the market data (competitors, market size).
 - Signs of a hallucinated or inflated market (TAM far larger than the sector supports).
 
-Be specific and evidence-based: every flag must reference the concrete claim and the \
-concrete evidence. Do NOT invent evidence that is not present in the inputs.
+What is NOT a Red Flag: a figure the deck simply does not state. No reliable pitch deck contains
+every metric, and "the deck omits X" is a task for the next stage, not evidence of a problem.
+Mention omissions in `critic_feedback` (what to verify and where), never in `red_flags`.
+
+Be specific and evidence-based: every flag must quote the concrete claim AND the concrete \
+external evidence that contradicts it. If the inputs contain no statement that contradicts a \
+claim, the item is not a Red Flag — put it in `critic_feedback` as something to verify. Do NOT \
+invent evidence that is not present in the inputs.
 
 Return a single JSON object (no markdown fences) with exactly these keys:
 {
@@ -78,8 +83,18 @@ Use exactly this structure (keep the headings):
 Rules:
 - Be objective and evidence-based; ground every statement in the provided data.
 - If data is missing, say so explicitly rather than guessing.
-- In section 6, pick EXACTLY ONE recommendation and put it in bold on its own line:
-  **INVEST**, **DEEP AUDIT**, or **REJECT**, followed by 2-4 sentences of justification.
+- In section 6, put the verdict from DETERMINISTIC SCREEN in bold on its own line —
+  **INVEST**, **DEEP AUDIT** or **REJECT** — followed by 2-4 sentences of justification. The
+  screen is the policy: the number of observations does not move it, the evidence does.
+- Decide section 6 by materiality, not by how many flags were raised. Apply this rule in order:
+  1. **REJECT** only if the evidence shows the company is not viable: a revenue figure off by an
+     order of magnitude from the team or the market, a leadership claim contradicted by near-zero
+     traffic, or a team-size mismatch of 5x or more.
+  2. **DEEP AUDIT** if the deck states no revenue figure at all, or the benchmark fails badly.
+  3. **INVEST** otherwise — including when several flags remain. Flags that say "we could not
+     verify X" or "the deck does not state Y" are conditions of the investment, not reasons to
+     decline: list them in section 5 and name them in the justification, the way a partner writes
+     "invest, subject to the reference calls".
 - Keep it concise and board-ready. Return only the Markdown memo.
 """
 

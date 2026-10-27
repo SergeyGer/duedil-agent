@@ -46,6 +46,9 @@ NODE_LABEL_KEYS = {
 # Bundled decks from examples/ — the ones documented in examples/README.md. They are
 # reconstructions built from public reporting, which is why the picker says so.
 EXAMPLE_DECKS: list[tuple[str, str]] = [
+    ("Artisan_AI_Pitch_Deck.pdf", "Artisan AI"),
+    ("Figure_AI_Pitch_Deck.pdf", "Figure AI"),
+    ("TensorWave_Pitch_Deck.pdf", "TensorWave"),
     ("airbnb_deck.pdf", "Airbnb (2011)"),
     ("uber_deck.pdf", "Uber (2011)"),
     ("cursor_deck.pdf", "Cursor"),
@@ -55,6 +58,9 @@ EXAMPLE_DECKS: list[tuple[str, str]] = [
 
 # The website field is prefilled with the matching public URL when an example is picked.
 EXAMPLE_URLS = {
+    "Artisan_AI_Pitch_Deck.pdf": "https://artisan.co",
+    "Figure_AI_Pitch_Deck.pdf": "https://www.figure.ai",
+    "TensorWave_Pitch_Deck.pdf": "https://tensorwave.com",
     "airbnb_deck.pdf": "https://www.airbnb.com",
     "uber_deck.pdf": "https://www.uber.com",
     "cursor_deck.pdf": "https://cursor.com",

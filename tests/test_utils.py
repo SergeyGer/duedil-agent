@@ -85,3 +85,13 @@ def test_find_traffic_mentions():
     assert find_traffic_mentions("about 1,500 monthly visits") == [1500]
     assert find_traffic_mentions("12k visits per month") == [12000]
     assert find_traffic_mentions("traffic unknown") == []
+
+
+def test_absurd_headcounts_are_ignored():
+    """Regression: a traffic figure was read as "about 1800000 employees"."""
+
+    from app.utils import find_team_mentions
+
+    assert find_team_mentions("the team has 1,800,000 employees") == []
+    assert find_team_mentions("LinkedIn shows 51-200 employees")  # a range still parses
+    assert find_team_mentions("Team size: 50 employees") == [50]
