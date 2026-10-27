@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A recommendation policy that reflects materiality, not a flag count.** The supervisor now
+  receives a deterministic screen (`INVEST` / `DEEP AUDIT` / `REJECT`) computed from the evidence:
+  a failing benchmark rejects, an uncomputable one defers, and a company at several times the
+  benchmark can carry a contradiction as a condition. The memo must state that verdict, and if the
+  model writes another one the bold verdict is replaced — the document never contradicts the
+  recommendation the product shows next to it.
+- Three new bundled decks: Artisan AI, Figure AI and TensorWave.
+
+### Fixed
+
+- The critic no longer raises a Red Flag for a metric the deck simply omits: omissions go to
+  `critic_feedback` as verification tasks, and a flag now needs quoting evidence that contradicts
+  the claim.
+- Headcount read from the web prefers an explicit `Team Size: N` over the top of a LinkedIn band
+  (`51-200 employees` used to become 200), and a number above 100 000 is discarded as a parsing
+  accident — both produced a wrong ARR/employee benchmark.
+- When the deck states no headcount, the benchmark uses the external figure and says so.
+
+### Added
+
 - **The PDF is a report, not a printout.** It opens with a cover: report type, company, date, a
   colour-coded recommendation (INVEST / DEEP AUDIT / REJECT), four key figures and a table of
   contents; every following page carries a running header and a page number. Tables get a navy

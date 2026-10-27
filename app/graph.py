@@ -33,6 +33,7 @@ from .utils import (
     DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK,
     compute_financials,
     deterministic_recommendation,
+    find_stated_team_size,
     find_team_mentions,
     find_traffic_mentions,
     is_missing,
@@ -169,10 +170,35 @@ def agent_scraper(state: VentureState) -> dict:
 # Node: financial
 # ---------------------------------------------------------------------------
 def agent_financial(state: VentureState) -> dict:
-    """Compute ARR / team_size and benchmark it against B2B SaaS norms."""
+    """Compute ARR / team_size and benchmark it against B2B SaaS norms.
 
-    metrics = state.get("extracted_metrics") or {}
+    A deck that states revenue but not headcount is common, and refusing to compute anything then
+    throws away the one comparison an investor actually wants. When the deck is silent, the
+    largest headcount mentioned by the external sources is used instead — and the verdict says so,
+    so nobody mistakes a sourced estimate for a stated figure.
+    """
+
+    metrics = dict(state.get("extracted_metrics") or {})
+    sourced_team_size = ""
+    if parse_count(metrics.get("team_size")) is None:
+        market_text = "\n".join(state.get("market_data") or [])
+        stated = find_stated_team_size(market_text)
+        mentions = sorted(count for count in find_team_mentions(market_text) if count > 0)
+        if stated:
+            sourced_team_size = str(stated)
+        elif mentions:
+            # Median, not maximum: one stray "200 employees" about a competitor must not define
+            # the company's headcount.
+            sourced_team_size = str(mentions[len(mentions) // 2])
+            metrics["team_size"] = sourced_team_size
+
     benchmarks = compute_financials(metrics, DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK)
+    if sourced_team_size:
+        benchmarks["team_size_source"] = "external"
+        benchmarks["verdict"] = (
+            f"{benchmarks['verdict']} Headcount of {sourced_team_size} comes from external "
+            "sources: the deck does not state a team size."
+        )
     return {
         "financial_benchmarks": benchmarks,
         "progress_log": [f"[financial] {benchmarks['verdict']}"],
@@ -301,6 +327,22 @@ def _recommendation(state: VentureState) -> str:
     return deterministic_recommendation(state)
 
 
+_VERDICT_RE = re.compile(r"\*\*(INVEST|DEEP AUDIT|REJECT)\*\*")
+
+
+def _enforce_verdict(memo: str, verdict: str) -> str:
+    """Make the memo state the verdict the evidence implies.
+
+    The model writes the argument; the policy decides the conclusion. If the two disagree, the
+    memo's bold verdict is replaced so the document never contradicts the recommendation the
+    product shows next to it.
+    """
+
+    if not memo or not _VERDICT_RE.search(memo):
+        return memo
+    return _VERDICT_RE.sub(f"**{verdict}**", memo, count=1)
+
+
 def _build_context(state: VentureState) -> str:
     metrics = state.get("extracted_metrics") or {}
     benchmarks = state.get("financial_benchmarks") or {}
@@ -365,7 +407,7 @@ def agent_supervisor(state: VentureState) -> dict:
                 HumanMessage(content=_build_context(state)),
             ]
         )
-        memo = _message_text(message).strip()
+        memo = _enforce_verdict(_message_text(message), deterministic_recommendation(state)).strip()
     except Exception as exc:  # pragma: no cover - network/LLM failure path
         memo = ""
         reason = exc

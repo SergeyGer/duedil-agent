@@ -172,6 +172,20 @@ _TRAFFIC_RE_REVERSED = re.compile(
 )
 
 
+_STATED_TEAM_RE = re.compile(r"team\s*size\s*[:=-]?\s*(\d{1,6})", re.IGNORECASE)
+
+
+def find_stated_team_size(text: str) -> int | None:
+    """Return an explicitly stated headcount ("Team Size: 50"), or ``None``.
+
+    Structured fields beat prose ranges: when a data provider states the number, that is the
+    number, not the top of a band.
+    """
+
+    match = _STATED_TEAM_RE.search(text or "")
+    return int(match.group(1)) if match else None
+
+
 def find_team_mentions(text: str) -> list[int]:
     """Extract team-size figures mentioned in free text (e.g. LinkedIn counts)."""
 
@@ -180,7 +194,9 @@ def find_team_mentions(text: str) -> list[int]:
     counts: list[int] = []
     for match in _TEAM_RE.finditer(text):
         value = parse_number(match.group(0))
-        if value is not None:
+        # A headcount above 100 000 is a parsing accident (a traffic figure or a funding number
+        # caught by the "employees" window), not a team.
+        if value is not None and 0 < value <= 100_000:
             counts.append(int(value))
     return counts
 
@@ -202,23 +218,59 @@ def find_traffic_mentions(text: str) -> list[int]:
     return counts
 
 
-def deterministic_recommendation(state: dict[str, Any]) -> str:
-    """The recommendation the deterministic rules imply, independent of any model.
+#: Words that mark a flag as a contradiction rather than a task to verify.
+_MATERIAL_FLAG_WORDS = (
+    "mismatch",
+    "implausib",
+    "contradict",
+    "inconsisten",
+    "overstat",
+    "impossible",
+)
 
-    Used by the Supervisor's fallback memo, and as the fallback for the pull-request comment
-    when the memo does not state a verdict: a model can forget to name one, the rules cannot.
+
+def is_material_flag(flag: str) -> bool:
+    """True when a flag contradicts evidence, false for a "we could not verify X" note."""
+
+    lowered = (flag or "").lower()
+    return any(word in lowered for word in _MATERIAL_FLAG_WORDS)
+
+
+def deterministic_recommendation(state: dict[str, Any]) -> str:
+    """The recommendation the evidence implies, independent of any model.
+
+    The rule is about materiality, not about the number of observations: a real deck always
+    leaves questions open, and a partner answers those with conditions, not with a rejection
+    notice.
+
+    * **REJECT** — the financials fail the benchmark, or a flag contradicts the evidence.
+    * **DEEP AUDIT** — the benchmark cannot be computed from the deck.
+    * **INVEST** — the numbers clear the benchmark and the remaining flags are verification tasks.
     """
 
     flags = state.get("red_flags") or []
-    status = (state.get("financial_benchmarks") or {}).get("status")
-    if not flags and status == "above":
-        return "INVEST"
-    if len(flags) >= 3 or status == "below":
+    benchmarks = state.get("financial_benchmarks") or {}
+    status = benchmarks.get("status")
+    ratio = benchmarks.get("ratio_to_benchmark") or 0
+
+    if status == "below":
         return "REJECT"
-    return "DEEP AUDIT"
+    if status != "above":
+        return "DEEP AUDIT"
+
+    # A contradiction matters in proportion to how thin the margin is: a company at several times
+    # the benchmark can carry an open question as a condition, a marginal one cannot.
+    if any(is_material_flag(flag) for flag in flags):
+        if ratio < 3:
+            return "REJECT"
+        if ratio < 8:
+            return "DEEP AUDIT"
+    return "INVEST"
 
 
 __all__ = [
+    "is_material_flag",
+    "find_stated_team_size",
     "deterministic_recommendation",
     "DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK",
     "is_missing",

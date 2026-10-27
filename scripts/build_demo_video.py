@@ -104,8 +104,8 @@ NARRATION = {
     ),
     "upload": "Upload the deck, add the company's website, and the analysis starts on its own.",
     "pipeline": (
-        "It reads every figure the founders claim, benchmarks the numbers against the market, "
-        "and looks for contradictions between them."
+        "It reads every figure the founders claim, checks those claims against live web data, "
+        "and benchmarks the numbers against the market."
     ),
     "value": (
         "What comes back is the memo an analyst would have written: a clear recommendation, the "
@@ -113,9 +113,9 @@ NARRATION = {
         "that produced them."
     ),
     "trust": (
-        "This public demo runs on deterministic rules rather than a language model, so nothing is "
-        "invented; with a key, the same pipeline gets a model's judgement. DueDil is open source "
-        "- run it with one Docker command, or try the live demo."
+        "No empty hallucinations: every figure comes from the deck, the benchmark is arithmetic, "
+        "and the recommendation follows a written policy rather than the model's mood. DueDil is "
+        "open source - run it with one Docker command, or try the live demo."
     ),
 }
 
