@@ -406,7 +406,11 @@ def main() -> None:
         )
 
     graph = build_graph()
-    state = initial_state(deck_text, website_url, deck_name)
+    try:
+        state = initial_state(deck_text, website_url, deck_name)
+    except TypeError:  # pragma: no cover - a rolling deploy can serve an older app.state
+        state = initial_state(deck_text, website_url)
+        state["deck_name"] = deck_name
 
     with st.status(t("status_running"), expanded=True) as status:
         for chunk in graph.stream(state, stream_mode="updates"):
