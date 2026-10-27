@@ -74,7 +74,7 @@ def main() -> int:
     # Rewrite the test first: same tokens, new numbers.
     def _test_repl(match: re.Match[str]) -> str:
         path, token = match.group("path"), match.group("token")
-        return f'("{path}", {actual_line(path, token)}, "{token}")'
+        return f'("{path}", {actual_line(path, token)}, {_quoted(token)})'
 
     TEST.write_text(CITATION_RE.sub(_test_repl, text), encoding="utf-8")
 

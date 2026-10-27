@@ -12,9 +12,9 @@ claimed**. Three properties follow from that, and each has a mechanism:
 
 | Property | Meaning | Where it is enforced |
 |---|---|---|
-| **Groundedness** | Every figure in the memo is either corroborated by external evidence or explicitly marked as absent | `app/graph.py:214` (rules), `app/utils.py:46` (`is_missing`), `app/prompts.py:14` (`[NOT_FOUND]` contract) |
+| **Groundedness** | Every figure in the memo is either corroborated by external evidence or explicitly marked as absent | `app/graph.py:217` (rules), `app/utils.py:46` (`is_missing`), `app/prompts.py:14` (`[NOT_FOUND]` contract) |
 | **Traceable reasoning** | Each run leaves a record of what every node received and produced | `VentureState` + `progress_log`, LangSmith traces, `used_model` |
-| **Graceful degradation** | A model outage, a bad key or a missing parser produces an honest weaker answer, never a fabricated one | `app/graph.py:368` (fallback memo), `app/offline_agents.py`, `app/parser.py` |
+| **Graceful degradation** | A model outage, a bad key or a missing parser produces an honest weaker answer, never a fabricated one | `app/graph.py:371` (fallback memo), `app/offline_agents.py`, `app/parser.py` |
 
 There is deliberately **no "confidence score"**. A number invented by an LLM to describe its own
 confidence is exactly the kind of unverifiable output this project exists to avoid.
@@ -26,11 +26,11 @@ confidence is exactly the kind of unverifiable output this project exists to avo
 | **Hallucinated figure** | The deck says nothing about revenue; the model returns `"$1.2M"` | Prompt contract returns `[NOT_FOUND]`; `is_missing()` treats it as absent; the financial audit then reports it *cannot* compute efficiency instead of inventing one | `tests/test_utils.py::test_financials_missing_arr` |
 | **Invented source** | "According to TechCrunch…" with no such source | The Critic only sees the *scraped* market text, and the memo is built from the state; claims are cross-checked against that text, not against the model's memory | `tests/test_graph.py`, `tests/test_critic.py` |
 | **Silent gap** | A missing metric simply disappears from the memo | `[NOT_FOUND]` propagates through state → benchmark → memo → UI (`— (not in the deck)`) | `tests/test_offline_agents.py::test_figures_the_deck_does_not_state_are_reported_as_missing` |
-| **Unchecked claim** | "We are the market leader" with no traffic | Leadership keywords (`app/graph.py:48`) + traffic peak `< 5 000` → Red Flag (`app/graph.py:246`) | `tests/test_critic.py::test_deterministic_leadership_vs_traffic` |
-| **Implausible team size** | "300 employees" against external evidence of 15 | Rule: a 5× mismatch in either direction raises a flag (`app/graph.py:226`, `:225`) | `tests/test_critic.py::test_deterministic_team_mismatch` |
-| **Runaway loop** | Critic keeps asking for more scraping | `MAX_CRITIC_LOOPS = 2` (`app/graph.py:45`), enforced by `route_after_critic` (`app/graph.py:310`) | `tests/test_graph.py::test_graph_loop_is_capped` |
+| **Unchecked claim** | "We are the market leader" with no traffic | Leadership keywords (`app/graph.py:48`) + traffic peak `< 5 000` → Red Flag (`app/graph.py:249`) | `tests/test_critic.py::test_deterministic_leadership_vs_traffic` |
+| **Implausible team size** | "300 employees" against external evidence of 15 | Rule: a 5× mismatch in either direction raises a flag (`app/graph.py:229`, `:225`) | `tests/test_critic.py::test_deterministic_team_mismatch` |
+| **Runaway loop** | Critic keeps asking for more scraping | `MAX_CRITIC_LOOPS = 2` (`app/graph.py:45`), enforced by `route_after_critic` (`app/graph.py:313`) | `tests/test_graph.py::test_graph_loop_is_capped` |
 | **Malformed JSON** | The model wraps JSON in prose or code fences | `_safe_json` (`app/graph.py:65`) strips fences and extracts the outermost object, returning `{}` rather than raising | `tests/test_graph.py::test_safe_json_variants` |
-| **Model outage** | Timeout, `429`, revoked key | Node catches the exception, logs it, and the Supervisor writes the deterministic memo (`app/graph.py:368`) marked `_(Generated without LLM: …)_` | `tests/test_graph.py::test_graph_survives_llm_failure` |
+| **Model outage** | Timeout, `429`, revoked key | Node catches the exception, logs it, and the Supervisor writes the deterministic memo (`app/graph.py:371`) marked `_(Generated without LLM: …)_` | `tests/test_graph.py::test_graph_survives_llm_failure` |
 | **Silent model drift** | A different model produced the memo and nobody noticed | `used_model` is recorded by the extractor and stamped into the memo, the CLI and the PDF footer | `tests/test_display.py` |
 
 ## The path of one figure
@@ -43,16 +43,16 @@ This is the concrete chain that turns a string in a deck into a line in a memo:
    `[NOT_FOUND]`" (`app/prompts.py:32`). The reply goes through `_safe_json`; a parse failure
    yields `{}`, not an exception.
 2. **Verification** — `agent_scraper` collects external text (Tavily). `agent_critic`
-   (`app/graph.py:259`) sends claims + market text to `CRITIC_SYSTEM` (`app/prompts.py:35`),
+   (`app/graph.py:262`) sends claims + market text to `CRITIC_SYSTEM` (`app/prompts.py:35`),
    which explicitly lists "[NOT_FOUND] metrics any serious investor would demand" as a finding.
 3. **Deterministic cross-check** — the same node merges `_deterministic_flags`
-   (`app/graph.py:214`), which runs regardless of what the model said: team-size mismatch,
-   leadership vs traffic, missing ARR (`app/graph.py:253`). A rule cannot be argued away by a confident model.
+   (`app/graph.py:217`), which runs regardless of what the model said: team-size mismatch,
+   leadership vs traffic, missing ARR (`app/graph.py:256`). A rule cannot be argued away by a confident model.
 4. **Benchmarking** — `compute_financials` (`app/utils.py:101`) compares ARR ÷ headcount against
    `DEFAULT_ARR_PER_EMPLOYEE_BENCHMARK = 100 000` (`app/utils.py:13`). If either input is missing,
    the verdict is literally *"Cannot compute efficiency"* (`app/utils.py:126`) — a result, not a gap.
 5. **Synthesis** — the Supervisor gets metrics, benchmarks, market text and flags as JSON
-   (`_build_context`, `app/graph.py:349`) and writes the six fixed sections
+   (`_build_context`, `app/graph.py:352`) and writes the six fixed sections
    (`SUPERVISOR_SYSTEM`, `app/prompts.py:67`), which require the model to say so when data is
    missing.
 
@@ -75,8 +75,8 @@ used, so a difference is explainable.
 
 When no API key is configured — the hosted demo — the LLM nodes are replaced by deterministic
 agents (`app/offline_agents.py`): `OfflineExtractorLLM` reads titles, amounts and headcounts by
-rule (`app/offline_agents.py:243`), and `OfflineSupervisorLLM` assembles the memo from that
-reading (`app/offline_agents.py:461`). The
+rule (`app/offline_agents.py:395`), and `OfflineSupervisorLLM` assembles the memo from that
+reading (`app/offline_agents.py:617`). The
 pipeline is the same; only the reader changes. The UI states that no model ran, and the memo
 byline says `offline rules, deck_aware (no model)` — a weaker answer that is honest about being
 weaker.

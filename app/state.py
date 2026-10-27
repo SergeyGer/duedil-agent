@@ -35,6 +35,9 @@ class VentureState(TypedDict, total=False):
     # --- Inputs -------------------------------------------------------------
     website_url: str
     pitch_deck_raw: str
+    #: The file the deck came from. A blueprint deck often has no company in its title, and the
+    #: file name is the one signal the reader definitely chose.
+    deck_name: str
 
     # --- Extractor ----------------------------------------------------------
     extracted_metrics: dict
@@ -64,12 +67,13 @@ class VentureState(TypedDict, total=False):
     error: str
 
 
-def initial_state(pitch_deck_raw: str, website_url: str = "") -> VentureState:
+def initial_state(pitch_deck_raw: str, website_url: str = "", deck_name: str = "") -> VentureState:
     """Build a fresh, fully-initialised state for a single run."""
 
     return VentureState(
         website_url=website_url or "",
         pitch_deck_raw=pitch_deck_raw or "",
+        deck_name=deck_name or "",
         extracted_metrics={},
         market_data=[],
         financial_benchmarks={},

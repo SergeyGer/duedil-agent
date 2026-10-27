@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 from typing import Any
 
 #: How a figure the deck does not state is reported, in the decks and here alike.
@@ -120,36 +121,187 @@ def _explicitly_absent(text: str, words: tuple[str, ...]) -> bool:
     return False
 
 
-def extract_company_name(text: str) -> str:
-    """Read the company name from the deck's title, trimmed of round descriptions.
+#: Lines that describe the document, not the company. A blueprint deck often opens with
+#: "STRICTLY CONFIDENTIAL" or "# SLIDE 1: …", and taking that as the company name produced a
+#: memo about a company called "SLIDE 1".
+_BOILERPLATE = (
+    "strictly confidential",
+    "confidential",
+    "slide ",
+    "blueprint",
+    "pitch deck",
+    "venture pitch",
+    "vision",
+    "mission",
+    "category",
+    "visual",
+    "on-slide",
+    "table of contents",
+    "investor",
+    "message",
+    "headline",
+    "copy ",
+    "typography",
+    "layout",
+    "wireframe",
+    "executive summary",
+    "financial",
+    "roadmap",
+    "traction",
+    "competition",
+    "business model",
+    "why now",
+    "problem",
+    "solution",
+    "use of funds",
+)
 
-    The title is the first heading when the parser produces Markdown (LlamaParse) and the
-    first non-empty line when it returns plain text (the ``pypdf`` fallback, which is what
-    a deployment without ``LLAMA_CLOUD_API_KEY`` uses). Both paths are supported here — the
-    earlier version only looked for ``#`` and returned "Unknown Startup" for every deck on
-    the hosted demo, which is how the bug was noticed.
+#: ``Artisan builds …`` / ``TensorWave is …`` — a company name followed by a verb that describes it.
+_BODY_NAME_RE = re.compile(
+    r"\b([A-Z][A-Za-z0-9&.'-]*(?:[ \t]+[A-Z][A-Za-z0-9&.'-]*)?)[ \t]+"
+    r"(?:builds|offers|provides|develops|raised|serves|powers|delivers)\b"
+)
+
+_EXPLICIT_NAME_RE = re.compile(
+    r"(?:company|startup|company name)\s*[:\-]\s*([A-Z][A-Za-z0-9&.' -]{1,40})",
+    re.IGNORECASE,
+)
+
+
+#: Ordinary words that the sentence pattern ("X builds …") can catch: they describe the text,
+#: not the company.
+_STOP_NAMES = {
+    "this",
+    "that",
+    "these",
+    "the",
+    "it",
+    "its",
+    "our",
+    "we",
+    "they",
+    "their",
+    "there",
+    "company",
+    "startup",
+    "team",
+    "deck",
+    "slide",
+    "market",
+    "product",
+    "platform",
+    "solution",
+    "business",
+    "and",
+    "for",
+    "with",
+    "from",
+}
+
+
+def _looks_like_name(candidate: str) -> bool:
+    lowered = (candidate or "").strip().lower()
+    if len(lowered) < 2 or len(lowered) > 40:
+        return False
+    if lowered in _STOP_NAMES:
+        return False
+    if any(word in lowered for word in _BOILERPLATE):
+        return False
+    return bool(re.search(r"[A-Za-z]", candidate))
+
+
+def company_from_filename(name: str) -> str:
+    """Derive a readable company name from a deck's file name.
+
+    ``Figure_AI_Pitch_Deck.pdf`` -> ``Figure AI``. The file name is a signal the reader chose,
+    and for the reconstruction decks it is the only place the company is named.
     """
 
-    raw = ""
-    for line in text.splitlines():
+    stem = Path(name or "").stem
+    stem = re.sub(r"(?i)[-_ ]?(pitch[-_ ]?deck|deck|presentation|slides?)$", "", stem)
+    stem = stem.replace("_", " ").replace("-", " ").strip()
+    words = []
+    for word in stem.split():
+        if word.isupper() and len(word) <= 4:  # AI, ML, GPU
+            words.append(word)
+        elif word.isalpha() and re.search(r"[A-Z]", word[1:]):  # TensorWave keeps its shape
+            words.append(word)
+        elif word.isalpha():
+            words.append(word.capitalize())
+        else:
+            words.append(word)
+    return " ".join(words[:4]).strip()
+
+
+#: File names that describe a file, not a company.
+_GENERIC_FILE_WORDS = {
+    "sample",
+    "deck",
+    "pitch",
+    "template",
+    "test",
+    "demo",
+    "file",
+    "document",
+    "scan",
+    "untitled",
+    "copy",
+    "final",
+    "new",
+    "presentation",
+    "slides",
+}
+
+
+def _specific_filename(name: str) -> str:
+    """The company part of a file name, or ``""`` when the name says nothing about the company."""
+
+    candidate = company_from_filename(name)
+    words = [word.lower() for word in candidate.split()]
+    if not words or all(word in _GENERIC_FILE_WORDS for word in words):
+        return ""
+    return candidate
+
+
+def extract_company_name(text: str, deck_name: str = "") -> str:
+    """Read the company name from the deck, falling back to the file name.
+
+    An explicit "Company: X" wins, then a body sentence that names the company and says what it
+    does ("Artisan builds …"), then the first heading that is not document boilerplate, and
+    finally the file name. The order matters: a blueprint deck has no company in its title, and
+    guessing from headings produced memos about "SLIDE 1".
+    """
+
+    explicit = _EXPLICIT_NAME_RE.search(text or "")
+    if explicit and _looks_like_name(explicit.group(1)):
+        return explicit.group(1).strip(" *_—–-")
+
+    body = _BODY_NAME_RE.search(text or "")
+    if body:
+        candidate = body.group(1).splitlines()[0].strip(" *_—–-")
+        if _looks_like_name(candidate):
+            return candidate
+
+    from_name = _specific_filename(deck_name)
+    if _looks_like_name(from_name):
+        return from_name
+
+    for line in (text or "").splitlines():
         stripped = line.strip()
         if not stripped:
             continue
-        match = re.match(r"^#\s+\**([^#\n]+?)\**\s*$", stripped)
-        if match:
-            raw = match.group(1)
-            break
-        if not raw:
-            raw = stripped
-            break
-    name = raw.strip(" *_—–-")
-    lowered = name.lower()
-    for stop in (" — ", " – ", " - ", ":", " (", " series ", " pitch", " deck"):
-        index = lowered.find(stop)
-        if index > 0:
-            name = name[:index]
-            lowered = name.lower()
-    return name.strip(" *_—–-") or "Unknown Startup"
+        match = re.match(r"^#{1,3}\s+\**([^#\n]+?)\**\s*$", stripped)
+        candidate = match.group(1) if match else stripped
+        candidate = candidate.split(":", 1)[0]
+        for stop in (" — ", " – ", " - ", " (", " series ", " pitch", " deck"):
+            index = candidate.lower().find(stop)
+            if index > 0:
+                candidate = candidate[:index]
+        candidate = candidate.strip(" *_—–-")
+        if _looks_like_name(candidate):
+            return candidate
+
+    return "Unknown Startup"
 
 
 def _team_size(text: str) -> str:
@@ -240,7 +392,7 @@ def _leadership_claim(text: str) -> str:
     return NOT_FOUND
 
 
-def extract_metrics(deck_text: str, website_url: str = "") -> dict[str, Any]:
+def extract_metrics(deck_text: str, website_url: str = "", deck_name: str = "") -> dict[str, Any]:
     """Read the metrics the real Extractor looks for, using the deck's own words."""
 
     arr = None if _explicitly_absent(deck_text, _ARR_WORDS) else _figure_near(deck_text, _ARR_WORDS)
@@ -248,7 +400,7 @@ def extract_metrics(deck_text: str, website_url: str = "") -> dict[str, Any]:
     tam = None if _explicitly_absent(deck_text, _TAM_WORDS) else _figure_near(deck_text, _TAM_WORDS)
 
     metrics: dict[str, Any] = {
-        "company_name": extract_company_name(deck_text),
+        "company_name": extract_company_name(deck_text, deck_name),
         "sector": _sector(deck_text),
         "business_model": _business_model(deck_text),
         "founded_year": _founded_year(deck_text),
@@ -290,12 +442,16 @@ class OfflineExtractorLLM:
 
     def invoke(self, messages, **_: object) -> _Response:  # noqa: ANN001 - mimic LangChain
         deck = ""
+        deck_name = ""
         for message in messages:
             content = str(getattr(message, "content", ""))
+            if "SOURCE FILE:" in content:
+                head = content.split("SOURCE FILE:", 1)[1].split("\n", 1)[0]
+                deck_name = head.strip()
             if "PITCH DECK TEXT:" in content:
                 deck = content.split("PITCH DECK TEXT:", 1)[1]
                 break
-        return _Response(json.dumps(extract_metrics(deck), ensure_ascii=False))
+        return _Response(json.dumps(extract_metrics(deck, deck_name=deck_name), ensure_ascii=False))
 
 
 def _json_block(context: str, label: str) -> dict[str, Any]:
@@ -471,6 +627,7 @@ __all__ = [
     "OfflineExtractorLLM",
     "OfflineSupervisorLLM",
     "build_offline_memo",
+    "company_from_filename",
     "extract_company_name",
     "extract_metrics",
     "format_amount",

@@ -362,13 +362,16 @@ def main() -> None:
             slot.info(f"⏳ {t(NODE_LABEL_KEYS[node])}")
 
     deck_bytes: bytes | None = None
+    deck_name = ""
     if uploaded is not None:
         # An explicit upload wins, and the remembered example is dropped so the next run
         # cannot silently fall back to it.
         st.session_state["chosen_example"] = None
         deck_bytes = uploaded.read()
+        deck_name = uploaded.name
     elif chosen_file:
         deck_bytes = _deck_from_example(chosen_file)
+        deck_name = chosen_file
         if deck_bytes is None:
             st.error(t("err_parse", error=f"{chosen_file} is not available in this deployment"))
             return
@@ -403,7 +406,7 @@ def main() -> None:
         )
 
     graph = build_graph()
-    state = initial_state(deck_text, website_url)
+    state = initial_state(deck_text, website_url, deck_name)
 
     with st.status(t("status_running"), expanded=True) as status:
         for chunk in graph.stream(state, stream_mode="updates"):

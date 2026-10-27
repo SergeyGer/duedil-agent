@@ -93,6 +93,7 @@ def agent_extractor(state: VentureState) -> dict:
     """Extract structured metrics from ``pitch_deck_raw`` (never invents data)."""
 
     deck = state.get("pitch_deck_raw") or ""
+    deck_name = state.get("deck_name") or ""
     model = model_label()
 
     try:
@@ -100,7 +101,9 @@ def agent_extractor(state: VentureState) -> dict:
         message = llm.invoke(
             [
                 SystemMessage(content=EXTRACTOR_SYSTEM),
-                HumanMessage(content=f"PITCH DECK TEXT:\n\n{deck[:24000]}"),
+                HumanMessage(
+                    content=(f"SOURCE FILE: {deck_name}\n\nPITCH DECK TEXT:\n\n{deck[:24000]}")
+                ),
             ]
         )
         metrics = _safe_json(_message_text(message))
