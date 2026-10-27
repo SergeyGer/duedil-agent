@@ -25,6 +25,7 @@ from app import display as _display
 from app.comment import recommendation_of
 from app.display import (
     benchmark_rows,
+    currency_of,
     metric_rows,
     state_summary,
     verdict_of,
@@ -454,7 +455,7 @@ def main() -> None:
             st.write(t("no_metrics"))
     with right:
         st.subheader(t("benchmarks_header"))
-        rows = benchmark_rows(benchmarks)
+        rows = benchmark_rows(benchmarks, currency_of(metrics))
         if benchmarks:
             st.dataframe(
                 rows,

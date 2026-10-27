@@ -67,6 +67,7 @@ Commented-out entries in `env.example` are optional advanced switches.
 | `scripts/project.ps1` | > |
 | `scripts/project.sh` | DueDil.Agent — start/stop helper for Linux, macOS and WSL. |
 | `scripts/publish_wiki.sh` | Publish docs/wiki/*.md to the repository's GitHub wiki. |
+| `scripts/refresh_doc_citations.py` | Refresh the code citations in the Answer-Quality page from the actual sources. |
 | `scripts/validate_docs.py` | Validate the documentation: links, anchors, ADRs, wiki metadata and generated pages. |
 
 ## Wiki pages

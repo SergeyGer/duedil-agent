@@ -342,9 +342,16 @@ def _label(key: str) -> str:
     return _LABELS.get(key, key.replace("_", " ").capitalize())
 
 
-def _money(value: object) -> str:
+def _currency(metrics: dict[str, Any]) -> str:
+    for symbol in ("€", "£", "¥"):
+        if any(symbol in str(metrics.get(key) or "") for key in ("arr", "mrr", "tam")):
+            return symbol
+    return "$"
+
+
+def _money(value: object, currency: str = "$") -> str:
     if isinstance(value, (int, float)) and value:
-        return f"${value:,.0f}"
+        return f"{currency}{value:,.2f}"
     return "not computable"
 
 
@@ -436,8 +443,8 @@ def build_offline_memo(supervisor_input: str) -> str:
         f"{verdict}\n\n"
         f"- Status: **{status}**\n"
         f"- ARR: {_value(metrics.get('arr'))} | team size: {_value(metrics.get('team_size'))} | "
-        f"ARR per employee: {_money(benchmarks.get('arr_per_employee'))}\n"
-        f"- Benchmark: {_money(benchmarks.get('benchmark_arr_per_employee'))} "
+        f"ARR per employee: {_money(benchmarks.get('arr_per_employee'), _currency(metrics))}\n"
+        f"- Benchmark: {_money(benchmarks.get('benchmark_arr_per_employee'), _currency(metrics))} "
         "(B2B SaaS, per employee)\n\n"
         "## 5. Hidden Risks (Red Flags)\n"
         + ("\n".join(f"- {flag}" for flag in flags) or "- none")

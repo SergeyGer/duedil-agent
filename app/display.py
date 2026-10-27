@@ -45,11 +45,33 @@ STATUS_MARKERS = {
 }
 
 
-def format_money(value: Any) -> str:
+#: Currency symbols the extractor can meet in a deck, and the default when none is stated.
+CURRENCY_SYMBOLS = ("$", "€", "£", "¥")
+
+
+def currency_of(metrics: dict[str, Any] | None) -> str:
+    """The currency the deck states, or ``$`` when it states none.
+
+    The memo already quotes amounts as written ("€1.2M"); the computed figures should follow the
+    same currency instead of stamping dollars on a euro deck.
+    """
+
+    text = " ".join(str((metrics or {}).get(key) or "") for key in ("arr", "mrr", "tam"))
+    for symbol in CURRENCY_SYMBOLS:
+        if symbol in text:
+            return symbol
+    upper = text.upper()
+    for code, symbol in (("EUR", "€"), ("GBP", "£"), ("JPY", "¥")):
+        if code in upper:
+            return symbol
+    return "$"
+
+
+def format_money(value: Any, currency: str = "$") -> str:
     """``1200000.0`` -> ``"$1,200,000"``; unknown values pass through untouched."""
 
     if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return f"${value:,.0f}"
+        return f"{currency}{value:,.2f}"
     return "—" if value in (None, "") else str(value)
 
 
@@ -108,7 +130,7 @@ def metric_rows(metrics: dict[str, Any] | None) -> list[dict[str, str]]:
     return rows
 
 
-def benchmark_rows(benchmarks: dict[str, Any] | None) -> list[dict[str, str]]:
+def benchmark_rows(benchmarks: dict[str, Any] | None, currency: str = "$") -> list[dict[str, str]]:
     """Return the financial audit as readable rows.
 
     The verdict is deliberately **not** a row: it is the conclusion of the analysis and
@@ -117,15 +139,15 @@ def benchmark_rows(benchmarks: dict[str, Any] | None) -> list[dict[str, str]]:
 
     benchmarks = benchmarks or {}
     rows = [
-        {"metric": "ARR", "value": format_money(benchmarks.get("arr"))},
+        {"metric": "ARR", "value": format_money(benchmarks.get("arr"), currency)},
         {"metric": "Team size", "value": format_metric_value(benchmarks.get("team_size"))},
         {
             "metric": "ARR per employee",
-            "value": format_money(benchmarks.get("arr_per_employee")),
+            "value": format_money(benchmarks.get("arr_per_employee"), currency),
         },
         {
             "metric": "Benchmark (B2B SaaS)",
-            "value": format_money(benchmarks.get("benchmark_arr_per_employee")),
+            "value": format_money(benchmarks.get("benchmark_arr_per_employee"), currency),
         },
         {
             "metric": "Against the benchmark",
@@ -175,7 +197,11 @@ def report_facts(state: dict[str, Any] | None) -> list[tuple[str, str]]:
         ("Team size", format_metric_value(metrics.get("team_size"))),
         (
             "ARR / employee",
-            format_money(per_employee) if per_employee is not None else "not computable",
+            (
+                format_money(per_employee, currency_of(metrics))
+                if per_employee is not None
+                else "not computable"
+            ),
         ),
         ("Red flags", str(len(state.get("red_flags") or []))),
     ]
@@ -184,6 +210,7 @@ def report_facts(state: dict[str, Any] | None) -> list[tuple[str, str]]:
 __all__ = [
     "benchmark_rows",
     "format_metric_value",
+    "currency_of",
     "format_money",
     "format_ratio",
     "metric_rows",

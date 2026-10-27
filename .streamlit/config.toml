@@ -12,3 +12,7 @@ gatherUsageStats = false
 # on the default, so the UI and the server agree.
 [server]
 maxUploadSize = 200
+
+# The app is the product: hide Streamlit's Deploy/Fork toolbar in the hosted demo.
+[client]
+toolbarMode = "minimal"
